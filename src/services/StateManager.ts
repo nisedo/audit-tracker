@@ -3,7 +3,6 @@ import * as path from "path";
 import {
   AuditTrackerState,
   AuditNote,
-  CodebaseNote,
   DailyProgress,
   DEFAULT_STATE,
   FunctionState,
@@ -236,24 +235,6 @@ export class StateManager {
 
   getNote(id: string): AuditNote | undefined {
     return this.state.notes?.find((n) => n.id === id);
-  }
-
-  getCodebaseNotes(): CodebaseNote[] {
-    return (this.state.notes || []).filter(
-      (n): n is CodebaseNote => n.type === "codebase"
-    );
-  }
-
-  getNotesForFile(filePath: string): AuditNote[] {
-    return (this.state.notes || []).filter(
-      (n) => n.type === "file" && n.filePath === filePath
-    );
-  }
-
-  getNotesForFunction(functionId: string): AuditNote[] {
-    return (this.state.notes || []).filter(
-      (n) => n.type === "function" && n.functionId === functionId
-    );
   }
 
   getNotesForLine(filePath: string, line: number): AuditNote[] {

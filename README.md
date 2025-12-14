@@ -121,15 +121,18 @@ Progress reports are generated at `.vscode/{repo-name}-audit-progress.md`.
 
 ## Language Support
 
-Works with any language that provides document symbols via VSCode's Language Server Protocol. Includes special handling for:
-- **Solidity**:
-  - Cleans up metadata from solidity-visual-auditor extension (removes `( complex: X state: ... )` suffixes)
-  - Removes redundant contract name prefixes (e.g., `PolicyBase.onInstall` becomes `onInstall`)
-  - Excludes events from the function panel (only shows functions, methods, modifiers, and constructors)
+Works with any language that provides document symbols via VSCode's Language Server Protocol.
 
-## Known Issues
+**Important**: Install only **one** language extension per language to avoid duplicate or conflicting symbols.
 
-- Duplicate symbols may appear if multiple language servers provide overlapping results (mitigated by line-based deduplication)
+### Recommended Extensions
+
+| Language | Recommended Extension |
+|----------|----------------------|
+| Solidity | [Hardhat for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=NomicFoundation.hardhat-solidity) (`NomicFoundation.hardhat-solidity`) |
+| TypeScript/JavaScript | Built-in VSCode support |
+| Rust | rust-analyzer |
+| Go | gopls |
 
 ## Release Notes
 
@@ -138,8 +141,8 @@ Works with any language that provides document symbols via VSCode's Language Ser
 - Daily progress tracking with detailed markdown reports
 - Hide/unhide functions from panel
 - Read-before-review workflow enforcement
-- Solidity: removes contract name prefix, excludes events
 - Faster navigation highlighting (500ms)
+- Simplified symbol extraction (requires single language extension per language)
 
 ### 0.1.0
 

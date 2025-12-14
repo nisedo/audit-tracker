@@ -53,30 +53,6 @@ export interface BaseNote {
 }
 
 /**
- * Note attached to the entire codebase
- */
-export interface CodebaseNote extends BaseNote {
-  type: "codebase";
-}
-
-/**
- * Note attached to a specific file
- */
-export interface FileNote extends BaseNote {
-  type: "file";
-  filePath: string;
-}
-
-/**
- * Note attached to a specific function
- */
-export interface FunctionNote extends BaseNote {
-  type: "function";
-  filePath: string;
-  functionId: string;
-}
-
-/**
  * Note attached to a specific line
  */
 export interface LineNote extends BaseNote {
@@ -86,9 +62,9 @@ export interface LineNote extends BaseNote {
 }
 
 /**
- * Union type for all note types
+ * Note type (currently only line notes are supported)
  */
-export type AuditNote = CodebaseNote | FileNote | FunctionNote | LineNote;
+export type AuditNote = LineNote;
 
 /**
  * Represents a single tracked action for daily progress

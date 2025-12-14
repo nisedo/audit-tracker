@@ -22,51 +22,10 @@ export class SymbolExtractor {
         return [];
       }
 
-      const result = this.flattenSymbols(symbols, filePath);
-
-      // Deduplicate symbols (multiple providers may return the same symbols)
-      return this.deduplicateSymbols(result);
+      return this.flattenSymbols(symbols, filePath);
     } catch {
       return [];
     }
-  }
-
-  /**
-   * Deduplicate symbols by line number
-   * Keeps the first symbol found at each line (handles multiple providers)
-   */
-  private deduplicateSymbols(symbols: FunctionState[]): FunctionState[] {
-    const seen = new Set<number>();
-    const unique: FunctionState[] = [];
-
-    for (const symbol of symbols) {
-      if (!seen.has(symbol.startLine)) {
-        seen.add(symbol.startLine);
-        unique.push(symbol);
-      }
-    }
-
-    return unique;
-  }
-
-  /**
-   * Clean up symbol name for Solidity files
-   * Removes metadata like " (  complex: 4 state: ☑ )" appended by solidity-visual-auditor
-   * Also removes contract name prefix (e.g., "PolicyBase.❗️💰 onInstall" → "❗️💰 onInstall")
-   */
-  private cleanSymbolName(name: string, filePath: string): string {
-    if (filePath.endsWith(".sol")) {
-      // Remove " (  complex: X state: ☑/☐ )" pattern from Solidity symbols
-      // Pattern: " ( " + " complex: " + number + " state: " + checkbox + " )"
-      let cleaned = name.replace(/\s*\(\s*complex:\s*\d+\s*state:\s*[☑☐]\s*\)\s*$/u, "").trim();
-
-      // Remove contract name prefix (e.g., "PolicyBase.❗️💰 onInstall" → "❗️💰 onInstall")
-      // Pattern: ContractName. followed by optional emojis and function name
-      cleaned = cleaned.replace(/^[A-Za-z_][A-Za-z0-9_]*\./, "");
-
-      return cleaned;
-    }
-    return name;
   }
 
   /**
@@ -80,17 +39,14 @@ export class SymbolExtractor {
   ): FunctionState[] {
     const results: FunctionState[] = [];
 
-    const isSolidity = filePath.endsWith(".sol");
-
     for (const symbol of symbols) {
-      const cleanName = this.cleanSymbolName(symbol.name, filePath);
-      // For Solidity, don't prefix with contract name (it's redundant since each file is one contract)
-      const displayName = parentName && !isSolidity
-        ? `${parentName}.${cleanName}`
-        : cleanName;
+      // Prefix with parent name (e.g., "ClassName.methodName")
+      const displayName = parentName
+        ? `${parentName}.${symbol.name}`
+        : symbol.name;
 
-      // Include Functions, Methods, Constructors (exclude Events for Solidity)
-      if (this.isFunctionLike(symbol.kind, isSolidity)) {
+      // Include Functions, Methods, Constructors only
+      if (this.isFunctionLike(symbol.kind)) {
         results.push({
           id: `${filePath}#${displayName}#${symbol.range.start.line}`,
           name: displayName,
@@ -121,20 +77,12 @@ export class SymbolExtractor {
 
   /**
    * Check if symbol kind represents a function-like construct
-   * Includes various kinds that different languages might use for functions/methods
    */
-  private isFunctionLike(kind: vscode.SymbolKind, isSolidity: boolean): boolean {
-    // Exclude Events for Solidity (they're not reviewable code)
-    if (isSolidity && kind === vscode.SymbolKind.Event) {
-      return false;
-    }
+  private isFunctionLike(kind: vscode.SymbolKind): boolean {
     return [
       vscode.SymbolKind.Function,
       vscode.SymbolKind.Method,
       vscode.SymbolKind.Constructor,
-      vscode.SymbolKind.Event,      // Some languages use this for functions
-      vscode.SymbolKind.Operator,   // Some languages use this for operators
-      vscode.SymbolKind.Property,   // Getters/setters in some languages
     ].includes(kind);
   }
 
