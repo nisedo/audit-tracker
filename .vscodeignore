@@ -1,0 +1,11 @@
+.vscode/**
+.vscode-test/**
+.claude/**
+src/**
+.gitignore
+*.map
+node_modules/**
+tsconfig.json
+eslint.config.mjs
+.eslintrc*
+icon.svg

@@ -1,0 +1,194 @@
+{
+  "name": "audit-tracker",
+  "displayName": "Audit Tracker",
+  "description": "Track code audit progress by marking files in scope and tracking function review status",
+  "version": "0.1.0",
+  "publisher": "nisedo",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nisedo/audit-tracker"
+  },
+  "icon": "icon.png",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "audit-tracker",
+          "title": "Audit Tracker",
+          "icon": "$(checklist)"
+        }
+      ]
+    },
+    "views": {
+      "audit-tracker": [
+        {
+          "id": "auditTracker.scopeView",
+          "name": "Functions"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "auditTracker.addToScope",
+        "title": "Audit: Add to Scope"
+      },
+      {
+        "command": "auditTracker.removeFromScope",
+        "title": "Audit: Remove from Scope"
+      },
+      {
+        "command": "auditTracker.markRead",
+        "title": "Mark as Read",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "auditTracker.unmarkRead",
+        "title": "Mark as Unread"
+      },
+      {
+        "command": "auditTracker.markReviewed",
+        "title": "Mark as Reviewed",
+        "icon": "$(check)"
+      },
+      {
+        "command": "auditTracker.unmarkReviewed",
+        "title": "Unmark Reviewed"
+      },
+      {
+        "command": "auditTracker.refresh",
+        "title": "Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "auditTracker.goToFunction",
+        "title": "Go to Function"
+      },
+      {
+        "command": "auditTracker.clearAllState",
+        "title": "Audit: Clear All Tracking State"
+      },
+      {
+        "command": "auditTracker.markEntrypoint",
+        "title": "Mark as Entrypoint",
+        "icon": "$(rocket)"
+      },
+      {
+        "command": "auditTracker.unmarkEntrypoint",
+        "title": "Unmark Entrypoint"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "auditTracker.addToScope",
+          "group": "audit@1",
+          "when": "explorerResourceIsFolder || resourceExtname"
+        },
+        {
+          "command": "auditTracker.removeFromScope",
+          "group": "audit@2",
+          "when": "explorerResourceIsFolder || resourceExtname"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "auditTracker.refresh",
+          "when": "view == auditTracker.scopeView",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "auditTracker.markRead",
+          "when": "view == auditTracker.scopeView && viewItem =~ /^functionUnread/",
+          "group": "inline@1"
+        },
+        {
+          "command": "auditTracker.markReviewed",
+          "when": "view == auditTracker.scopeView && viewItem =~ /^functionUnread/",
+          "group": "inline@2"
+        },
+        {
+          "command": "auditTracker.markRead",
+          "when": "view == auditTracker.scopeView && viewItem =~ /^functionUnread/",
+          "group": "audit@1"
+        },
+        {
+          "command": "auditTracker.markReviewed",
+          "when": "view == auditTracker.scopeView && viewItem =~ /^functionUnread/",
+          "group": "audit@2"
+        },
+        {
+          "command": "auditTracker.unmarkRead",
+          "when": "view == auditTracker.scopeView && viewItem =~ /^functionRead/",
+          "group": "inline@1"
+        },
+        {
+          "command": "auditTracker.markReviewed",
+          "when": "view == auditTracker.scopeView && viewItem =~ /^functionRead/",
+          "group": "inline@2"
+        },
+        {
+          "command": "auditTracker.unmarkRead",
+          "when": "view == auditTracker.scopeView && viewItem =~ /^functionRead/",
+          "group": "audit@1"
+        },
+        {
+          "command": "auditTracker.markReviewed",
+          "when": "view == auditTracker.scopeView && viewItem =~ /^functionRead/",
+          "group": "audit@2"
+        },
+        {
+          "command": "auditTracker.unmarkReviewed",
+          "when": "view == auditTracker.scopeView && viewItem =~ /^functionReviewed/",
+          "group": "inline@1"
+        },
+        {
+          "command": "auditTracker.unmarkReviewed",
+          "when": "view == auditTracker.scopeView && viewItem =~ /^functionReviewed/",
+          "group": "audit@1"
+        },
+        {
+          "command": "auditTracker.removeFromScope",
+          "when": "view == auditTracker.scopeView && viewItem == file",
+          "group": "audit@1"
+        },
+        {
+          "command": "auditTracker.markEntrypoint",
+          "when": "view == auditTracker.scopeView && viewItem =~ /^function(Unread|Read|Reviewed)$/",
+          "group": "entrypoint@1"
+        },
+        {
+          "command": "auditTracker.unmarkEntrypoint",
+          "when": "view == auditTracker.scopeView && viewItem =~ /Entrypoint$/",
+          "group": "entrypoint@1"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0",
+    "eslint": "^8.56.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0"
+  }
+}
