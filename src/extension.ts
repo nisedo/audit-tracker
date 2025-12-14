@@ -596,7 +596,7 @@ export async function activate(
         }
 
         const repoName = path.basename(workspaceRoot);
-        const notesFileName = `${repoName}-audittracker-notes.md`;
+        const notesFileName = `${repoName}-audit-tracker-notes.md`;
         const notesPath = path.join(workspaceRoot, ".vscode", notesFileName);
         const notesUri = vscode.Uri.file(notesPath);
 

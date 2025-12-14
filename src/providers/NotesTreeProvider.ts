@@ -15,7 +15,7 @@ export class CodebaseNotesItem extends vscode.TreeItem {
 
     // Show dynamic filename based on repo name
     const repoName = workspaceRoot ? path.basename(workspaceRoot) : "workspace";
-    this.description = `${repoName}-audittracker-notes.md`;
+    this.description = `${repoName}-audit-tracker-notes.md`;
 
     // Click to open the notes file
     this.command = {

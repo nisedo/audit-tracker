@@ -61,7 +61,7 @@ Right-click any function and select **Mark as Entrypoint** to highlight critical
 
 AuditTracker provides two types of notes:
 
-**Codebase Notes**: A markdown file (`.vscode/{repo-name}-audittracker-notes.md`) for free-form notes about the entire codebase. Click "Codebase Notes" in the Notes panel to open it.
+**Codebase Notes**: A markdown file (`.vscode/{repo-name}-audit-tracker-notes.md`) for free-form notes about the entire codebase. Click "Codebase Notes" in the Notes panel to open it.
 
 **Line Notes**: Attach notes to specific lines of code:
 1. Right-click on a line and select **AuditTracker: Add Line Note**
@@ -115,7 +115,7 @@ Each file shows:
 
 This extension stores state in `.vscode/{repo-name}-audit-tracker.json` within your workspace, where `{repo-name}` is the name of your workspace folder.
 
-Codebase notes are stored in `.vscode/{repo-name}-audittracker-notes.md`.
+Codebase notes are stored in `.vscode/{repo-name}-audit-tracker-notes.md`.
 
 Progress reports are generated at `.vscode/{repo-name}-audit-progress.md`.
 
