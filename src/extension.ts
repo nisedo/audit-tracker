@@ -304,7 +304,7 @@ export async function activate(
         await stateManager.save();
         treeProvider.refresh();
         decorationProvider.refresh(allFiles);
-        vscode.window.showInformationMessage("Audit tracking state cleared");
+        vscode.window.showInformationMessage("AuditTracker state cleared");
       }
     }),
 

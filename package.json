@@ -1,6 +1,6 @@
 {
   "name": "audit-tracker",
-  "displayName": "Audit Tracker",
+  "displayName": "AuditTracker",
   "description": "Track code audit progress by marking files in scope and tracking function review status",
   "version": "0.1.0",
   "publisher": "nisedo",
@@ -25,7 +25,7 @@
       "activitybar": [
         {
           "id": "audit-tracker",
-          "title": "Audit Tracker",
+          "title": "AuditTracker",
           "icon": "$(checklist)"
         }
       ]
@@ -41,11 +41,11 @@
     "commands": [
       {
         "command": "auditTracker.addToScope",
-        "title": "Audit: Add to Scope"
+        "title": "AuditTracker: Add to Scope"
       },
       {
         "command": "auditTracker.removeFromScope",
-        "title": "Audit: Remove from Scope"
+        "title": "AuditTracker: Remove from Scope"
       },
       {
         "command": "auditTracker.markRead",
@@ -76,7 +76,7 @@
       },
       {
         "command": "auditTracker.clearAllState",
-        "title": "Audit: Clear All Tracking State"
+        "title": "AuditTracker: Clear All Tracking State"
       },
       {
         "command": "auditTracker.markEntrypoint",

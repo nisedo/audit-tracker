@@ -1,4 +1,4 @@
-# Audit Tracker
+# AuditTracker
 
 A VSCode extension for tracking code audit progress. Mark files as in-scope, track function review status, and identify entrypoints.
 
@@ -18,8 +18,8 @@ A VSCode extension for tracking code audit progress. Mark files as in-scope, tra
 ### Adding Files to Scope
 
 1. Right-click a file or folder in the Explorer
-2. Select **Audit: Add to Scope**
-3. Functions will appear in the Audit Tracker panel
+2. Select **AuditTracker: Add to Scope**
+3. Functions will appear in the AuditTracker panel
 
 Or create a `SCOPE.txt` / `SCOPE.md` file at your workspace root with one path per line:
 
@@ -61,9 +61,9 @@ Each file shows:
 
 | Command | Description |
 |---------|-------------|
-| `Audit: Add to Scope` | Add file/folder to audit scope |
-| `Audit: Remove from Scope` | Remove from scope |
-| `Audit: Clear All Tracking State` | Reset all tracking data |
+| `AuditTracker: Add to Scope` | Add file/folder to audit scope |
+| `AuditTracker: Remove from Scope` | Remove from scope |
+| `AuditTracker: Clear All Tracking State` | Reset all tracking data |
 | `Refresh` | Re-extract symbols from all files |
 
 ## Requirements
