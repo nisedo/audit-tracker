@@ -9,7 +9,12 @@ import {
   FileTreeItem,
 } from "./providers/AuditTreeProvider";
 import { ScopeDecorationProvider } from "./providers/ScopeDecorationProvider";
-import { FunctionState } from "./models/types";
+import { NotesTreeProvider, NoteTreeItem } from "./providers/NotesTreeProvider";
+import {
+  NoteDecorationProvider,
+  NoteHoverProvider,
+} from "./providers/NoteDecorationProvider";
+import { FunctionState, AuditNote } from "./models/types";
 
 /**
  * Load scope from SCOPE.txt or SCOPE.md file if present
@@ -78,6 +83,8 @@ let scopeManager: ScopeManager;
 let symbolExtractor: SymbolExtractor;
 let treeProvider: AuditTreeProvider;
 let decorationProvider: ScopeDecorationProvider;
+let notesTreeProvider: NotesTreeProvider;
+let noteDecorationProvider: NoteDecorationProvider;
 
 export async function activate(
   context: vscode.ExtensionContext
@@ -98,9 +105,26 @@ export async function activate(
     vscode.window.registerFileDecorationProvider(decorationProvider)
   );
 
+  // Initialize notes providers
+  notesTreeProvider = new NotesTreeProvider(stateManager, workspaceRoot);
+  noteDecorationProvider = new NoteDecorationProvider(stateManager);
+
+  // Register hover provider for line notes (all file types)
+  const noteHoverProvider = new NoteHoverProvider(stateManager);
+  context.subscriptions.push(
+    vscode.languages.registerHoverProvider(
+      { scheme: "file" },
+      noteHoverProvider
+    )
+  );
+
   // Load scope from SCOPE.txt or SCOPE.md if present and state is empty
   if (stateManager.getScopePaths().length === 0) {
-    const addedFiles = await loadScopeFile(workspaceRoot, scopeManager, stateManager);
+    const addedFiles = await loadScopeFile(
+      workspaceRoot,
+      scopeManager,
+      stateManager
+    );
     if (addedFiles > 0) {
       treeProvider.refresh();
       decorationProvider.refreshAll();
@@ -112,6 +136,22 @@ export async function activate(
     treeDataProvider: treeProvider,
     showCollapseAll: true,
   });
+
+  // Register notes tree view
+  const notesTreeView = vscode.window.createTreeView("auditTracker.notesView", {
+    treeDataProvider: notesTreeProvider,
+    showCollapseAll: true,
+  });
+
+  // Update note decorations when active editor changes
+  context.subscriptions.push(
+    vscode.window.onDidChangeActiveTextEditor((editor) => {
+      noteDecorationProvider.setActiveEditor(editor);
+    })
+  );
+
+  // Initial decoration update
+  noteDecorationProvider.setActiveEditor(vscode.window.activeTextEditor);
 
   // Register commands
   context.subscriptions.push(
@@ -254,6 +294,26 @@ export async function activate(
       treeProvider.refresh();
     }),
 
+    // Load scope from SCOPE.txt or SCOPE.md file
+    vscode.commands.registerCommand("auditTracker.loadScopeFile", async () => {
+      const addedFiles = await loadScopeFile(
+        workspaceRoot,
+        scopeManager,
+        stateManager
+      );
+      if (addedFiles > 0) {
+        treeProvider.refresh();
+        decorationProvider.refreshAll();
+        vscode.window.showInformationMessage(
+          `Loaded ${addedFiles} file(s) from SCOPE file`
+        );
+      } else {
+        vscode.window.showWarningMessage(
+          "No SCOPE.txt or SCOPE.md file found, or no new files to add"
+        );
+      }
+    }),
+
     // Go to function
     vscode.commands.registerCommand(
       "auditTracker.goToFunction",
@@ -274,24 +334,29 @@ export async function activate(
         );
 
         // Temporarily highlight the function
-        const highlightDecoration = vscode.window.createTextEditorDecorationType({
-          backgroundColor: new vscode.ThemeColor("editor.findMatchHighlightBackground"),
-          isWholeLine: true,
-        });
+        const highlightDecoration =
+          vscode.window.createTextEditorDecorationType({
+            backgroundColor: new vscode.ThemeColor(
+              "editor.findMatchHighlightBackground"
+            ),
+            isWholeLine: true,
+          });
         const range = new vscode.Range(func.startLine, 0, func.endLine, 0);
         editor.setDecorations(highlightDecoration, [range]);
 
         // Remove highlight after 1 second
         setTimeout(() => {
           highlightDecoration.dispose();
-        }, 1000);
+        }, 800);
       }
     ),
 
     // Clear all state
     vscode.commands.registerCommand("auditTracker.clearAllState", async () => {
       // Get all files before clearing to refresh their decorations
-      const allFiles = stateManager.getAllFiles().map((f) => vscode.Uri.file(f.filePath));
+      const allFiles = stateManager
+        .getAllFiles()
+        .map((f) => vscode.Uri.file(f.filePath));
 
       const confirm = await vscode.window.showWarningMessage(
         "Clear all audit tracking state? This cannot be undone.",
@@ -303,12 +368,174 @@ export async function activate(
         stateManager.clearAllState();
         await stateManager.save();
         treeProvider.refresh();
+        notesTreeProvider.refresh();
         decorationProvider.refresh(allFiles);
+        noteDecorationProvider.updateDecorations();
         vscode.window.showInformationMessage("AuditTracker state cleared");
       }
     }),
 
-    treeView
+    // Open codebase notes file
+    vscode.commands.registerCommand(
+      "auditTracker.addCodebaseNote",
+      async () => {
+        if (!workspaceRoot) {
+          vscode.window.showErrorMessage("No workspace folder open");
+          return;
+        }
+
+        const repoName = path.basename(workspaceRoot);
+        const notesFileName = `${repoName}-audittracker-notes.md`;
+        const notesPath = path.join(workspaceRoot, ".vscode", notesFileName);
+        const notesUri = vscode.Uri.file(notesPath);
+
+        // Ensure .vscode directory exists
+        const vscodeDir = vscode.Uri.file(path.join(workspaceRoot, ".vscode"));
+        try {
+          await vscode.workspace.fs.createDirectory(vscodeDir);
+        } catch {
+          // Directory may already exist
+        }
+
+        // Create file if it doesn't exist
+        try {
+          await vscode.workspace.fs.stat(notesUri);
+        } catch {
+          const header = `# ${repoName} - Audit Notes\n\n`;
+          await vscode.workspace.fs.writeFile(notesUri, Buffer.from(header));
+        }
+
+        // Open the file
+        const doc = await vscode.workspace.openTextDocument(notesUri);
+        await vscode.window.showTextDocument(doc);
+      }
+    ),
+
+    // Go to line note
+    vscode.commands.registerCommand(
+      "auditTracker.goToLineNote",
+      async (note: AuditNote) => {
+        if (!note || note.type !== "line") {
+          return;
+        }
+
+        const uri = vscode.Uri.file(note.filePath);
+        const document = await vscode.workspace.openTextDocument(uri);
+        const editor = await vscode.window.showTextDocument(document);
+
+        const position = new vscode.Position(note.line, 0);
+        editor.selection = new vscode.Selection(position, position);
+        editor.revealRange(
+          new vscode.Range(position, position),
+          vscode.TextEditorRevealType.InCenter
+        );
+
+        // Temporarily highlight the line
+        const highlightDecoration =
+          vscode.window.createTextEditorDecorationType({
+            backgroundColor: new vscode.ThemeColor(
+              "editor.findMatchHighlightBackground"
+            ),
+            isWholeLine: true,
+          });
+        const range = new vscode.Range(note.line, 0, note.line, 0);
+        editor.setDecorations(highlightDecoration, [range]);
+
+        // Remove highlight after 800ms
+        setTimeout(() => {
+          highlightDecoration.dispose();
+        }, 800);
+      }
+    ),
+
+    // Add line note
+    vscode.commands.registerCommand("auditTracker.addLineNote", async () => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        vscode.window.showErrorMessage("No active editor");
+        return;
+      }
+
+      const line = editor.selection.active.line;
+      const filePath = editor.document.uri.fsPath;
+
+      const content = await vscode.window.showInputBox({
+        prompt: `Add note for line ${line + 1}`,
+        placeHolder: "Your line note...",
+      });
+
+      if (content) {
+        const note: AuditNote = {
+          id: `line-${Date.now()}`,
+          type: "line",
+          filePath,
+          line,
+          content,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        };
+        stateManager.addNote(note);
+        await stateManager.save();
+        notesTreeProvider.refresh();
+        noteDecorationProvider.updateDecorations();
+      }
+    }),
+
+    // Edit note
+    vscode.commands.registerCommand(
+      "auditTracker.editNote",
+      async (noteOrItem: AuditNote | NoteTreeItem) => {
+        const note =
+          noteOrItem instanceof NoteTreeItem ? noteOrItem.note : noteOrItem;
+        if (!note) {
+          return;
+        }
+
+        const content = await vscode.window.showInputBox({
+          prompt: "Edit note",
+          value: note.content,
+        });
+
+        if (content !== undefined) {
+          stateManager.updateNote(note.id, content);
+          await stateManager.save();
+          notesTreeProvider.refresh();
+          noteDecorationProvider.updateDecorations();
+        }
+      }
+    ),
+
+    // Delete note
+    vscode.commands.registerCommand(
+      "auditTracker.deleteNote",
+      async (item: NoteTreeItem) => {
+        if (!item?.note) {
+          return;
+        }
+
+        const confirm = await vscode.window.showWarningMessage(
+          "Delete this note?",
+          "Yes",
+          "No"
+        );
+
+        if (confirm === "Yes") {
+          stateManager.deleteNote(item.note.id);
+          await stateManager.save();
+          notesTreeProvider.refresh();
+          noteDecorationProvider.updateDecorations();
+        }
+      }
+    ),
+
+    // Refresh notes
+    vscode.commands.registerCommand("auditTracker.refreshNotes", () => {
+      notesTreeProvider.refresh();
+      noteDecorationProvider.updateDecorations();
+    }),
+
+    treeView,
+    notesTreeView
   );
 
   // Watch for file changes to update symbols

@@ -35,6 +35,10 @@
         {
           "id": "auditTracker.scopeView",
           "name": "Functions"
+        },
+        {
+          "id": "auditTracker.notesView",
+          "name": "Notes"
         }
       ]
     },
@@ -79,13 +83,41 @@
         "title": "AuditTracker: Clear All Tracking State"
       },
       {
+        "command": "auditTracker.loadScopeFile",
+        "title": "AuditTracker: Load Scope File"
+      },
+      {
         "command": "auditTracker.markEntrypoint",
-        "title": "Mark as Entrypoint",
-        "icon": "$(rocket)"
+        "title": "Mark as Entrypoint"
       },
       {
         "command": "auditTracker.unmarkEntrypoint",
         "title": "Unmark Entrypoint"
+      },
+      {
+        "command": "auditTracker.addCodebaseNote",
+        "title": "AuditTracker: Open Codebase Notes"
+      },
+      {
+        "command": "auditTracker.addLineNote",
+        "title": "AuditTracker: Add Line Note"
+      },
+      {
+        "command": "auditTracker.goToLineNote",
+        "title": "Go to Line"
+      },
+      {
+        "command": "auditTracker.editNote",
+        "title": "Edit Note"
+      },
+      {
+        "command": "auditTracker.deleteNote",
+        "title": "Delete Note"
+      },
+      {
+        "command": "auditTracker.refreshNotes",
+        "title": "Refresh Notes",
+        "icon": "$(refresh)"
       }
     ],
     "menus": {
@@ -106,6 +138,17 @@
           "command": "auditTracker.refresh",
           "when": "view == auditTracker.scopeView",
           "group": "navigation"
+        },
+        {
+          "command": "auditTracker.refreshNotes",
+          "when": "view == auditTracker.notesView",
+          "group": "navigation"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "auditTracker.addLineNote",
+          "group": "audit@1"
         }
       ],
       "view/item/context": [
@@ -173,19 +216,19 @@
           "command": "auditTracker.unmarkEntrypoint",
           "when": "view == auditTracker.scopeView && viewItem =~ /Entrypoint$/",
           "group": "entrypoint@1"
+        },
+        {
+          "command": "auditTracker.editNote",
+          "when": "view == auditTracker.notesView && viewItem == note",
+          "group": "notes@1"
+        },
+        {
+          "command": "auditTracker.deleteNote",
+          "when": "view == auditTracker.notesView && viewItem == note",
+          "group": "notes@2"
         }
       ]
-    },
-    "colors": [
-      {
-        "id": "auditTracker.scopedFileColor",
-        "description": "Color for files in audit scope",
-        "defaults": {
-          "dark": "#7ad108",
-          "light": "#4a9e00"
-        }
-      }
-    ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

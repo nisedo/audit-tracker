@@ -2,6 +2,8 @@ import * as vscode from "vscode";
 import * as path from "path";
 import {
   AuditTrackerState,
+  AuditNote,
+  CodebaseNote,
   DEFAULT_STATE,
   FunctionState,
   ScopedFile,
@@ -10,13 +12,14 @@ import {
 export class StateManager {
   private state: AuditTrackerState;
   private stateFilePath: vscode.Uri | undefined;
-  private readonly STATE_FILE_NAME = "audit-tracker.json";
 
   constructor(private workspaceRoot: string | undefined) {
     this.state = { ...DEFAULT_STATE };
     if (workspaceRoot) {
+      const repoName = path.basename(workspaceRoot);
+      const stateFileName = `${repoName}-audit-tracker.json`;
       this.stateFilePath = vscode.Uri.file(
-        path.join(workspaceRoot, ".vscode", this.STATE_FILE_NAME)
+        path.join(workspaceRoot, ".vscode", stateFileName)
       );
     }
   }
@@ -189,5 +192,66 @@ export class StateManager {
 
   clearAllState(): void {
     this.state = { ...DEFAULT_STATE };
+  }
+
+  // Note management methods
+
+  addNote(note: AuditNote): void {
+    if (!this.state.notes) {
+      this.state.notes = [];
+    }
+    this.state.notes.push(note);
+  }
+
+  updateNote(id: string, content: string): void {
+    const note = this.state.notes?.find((n) => n.id === id);
+    if (note) {
+      note.content = content;
+      note.updatedAt = Date.now();
+    }
+  }
+
+  deleteNote(id: string): void {
+    if (this.state.notes) {
+      this.state.notes = this.state.notes.filter((n) => n.id !== id);
+    }
+  }
+
+  getNotes(): AuditNote[] {
+    return this.state.notes || [];
+  }
+
+  getNote(id: string): AuditNote | undefined {
+    return this.state.notes?.find((n) => n.id === id);
+  }
+
+  getCodebaseNotes(): CodebaseNote[] {
+    return (this.state.notes || []).filter(
+      (n): n is CodebaseNote => n.type === "codebase"
+    );
+  }
+
+  getNotesForFile(filePath: string): AuditNote[] {
+    return (this.state.notes || []).filter(
+      (n) => n.type === "file" && n.filePath === filePath
+    );
+  }
+
+  getNotesForFunction(functionId: string): AuditNote[] {
+    return (this.state.notes || []).filter(
+      (n) => n.type === "function" && n.functionId === functionId
+    );
+  }
+
+  getNotesForLine(filePath: string, line: number): AuditNote[] {
+    return (this.state.notes || []).filter(
+      (n) => n.type === "line" && n.filePath === filePath && n.line === line
+    );
+  }
+
+  getLineNotesForFile(filePath: string): AuditNote[] {
+    return (this.state.notes || []).filter(
+      (n) => n.type === "line" && n.filePath === filePath
+    );
   }
 }

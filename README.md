@@ -1,17 +1,18 @@
 # AuditTracker
 
-A VSCode extension for tracking code audit progress. Mark files as in-scope, track function review status, and identify entrypoints.
+A VSCode extension for tracking code audit progress. Mark files as in-scope, track function review status, identify entrypoints, and take notes.
 
 ## Features
 
 - **Scope Management**: Right-click files or folders in the Explorer to add/remove from audit scope
-- **File Decorations**: In-scope files display a 📌 badge and green color in the Explorer
+- **File Decorations**: In-scope files display a 📌 badge in the Explorer
 - **Function Tracking**: Automatically extracts all functions from in-scope files
 - **Review Status**: Track functions as unread, read, or reviewed
 - **Entrypoints**: Mark critical functions as entrypoints for special visibility
 - **SCOPE File Support**: Auto-load scope from `SCOPE.txt` or `SCOPE.md` at workspace root
 - **Navigation**: Click any function to jump to it with temporary highlighting
-- **Persistence**: State is saved per-workspace in `.vscode/audit-tracker.json`
+- **Notes**: Take codebase-level notes (markdown file) and line-specific notes
+- **Persistence**: State is saved per-workspace in `.vscode/{repo-name}-audit-tracker.json`
 
 ## Usage
 
@@ -29,6 +30,8 @@ src/contracts/Vault.sol
 lib/utils/
 ```
 
+The scope file is auto-loaded when no existing config is found. Use the **AuditTracker: Load Scope File** command to manually reload it.
+
 ### Tracking Progress
 
 Functions display with three states:
@@ -41,9 +44,20 @@ Right-click or use inline buttons to change status.
 ### Marking Entrypoints
 
 Right-click any function and select **Mark as Entrypoint** to highlight critical entry points. Entrypoints display with:
-- Arrow prefix (`->`)
-- Rocket icon
-- "entrypoint" label
+- Arrow prefix (`→`)
+- "entrypoint" label in the description
+
+### Taking Notes
+
+AuditTracker provides two types of notes:
+
+**Codebase Notes**: A markdown file (`.vscode/{repo-name}-audittracker-notes.md`) for free-form notes about the entire codebase. Click "Codebase Notes" in the Notes panel to open it.
+
+**Line Notes**: Attach notes to specific lines of code:
+1. Right-click on a line and select **AuditTracker: Add Line Note**
+2. Lines with notes show a gutter icon
+3. Hover over annotated lines to see the note content
+4. Click notes in the Notes panel to navigate to them
 
 ### Panel Information
 
@@ -63,7 +77,10 @@ Each file shows:
 |---------|-------------|
 | `AuditTracker: Add to Scope` | Add file/folder to audit scope |
 | `AuditTracker: Remove from Scope` | Remove from scope |
+| `AuditTracker: Load Scope File` | Load/reload scope from SCOPE.txt or SCOPE.md |
 | `AuditTracker: Clear All Tracking State` | Reset all tracking data |
+| `AuditTracker: Open Codebase Notes` | Open the codebase notes markdown file |
+| `AuditTracker: Add Line Note` | Add a note to the current line |
 | `Refresh` | Re-extract symbols from all files |
 
 ## Requirements
@@ -73,7 +90,9 @@ Each file shows:
 
 ## Extension Settings
 
-This extension stores state in `.vscode/audit-tracker.json` within your workspace.
+This extension stores state in `.vscode/{repo-name}-audit-tracker.json` within your workspace, where `{repo-name}` is the name of your workspace folder.
+
+Codebase notes are stored in `.vscode/{repo-name}-audittracker-notes.md`.
 
 ## Language Support
 
@@ -92,9 +111,11 @@ Initial release:
 - Scope management via context menu
 - Function tracking (unread/read/reviewed)
 - Entrypoint marking
-- SCOPE file auto-loading
+- SCOPE file auto-loading and manual loading command
 - Function navigation with highlighting
-- Per-workspace state persistence
+- Codebase notes (markdown file)
+- Line notes with gutter icons, hover, and navigation
+- Per-workspace state persistence with dynamic naming
 
 ## License
 

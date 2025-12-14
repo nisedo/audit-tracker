@@ -64,22 +64,19 @@ export class FunctionTreeItem extends vscode.TreeItem {
       this.contextValue = `functionUnread${entrypointSuffix}`;
     }
 
-    // Icon based on status (entrypoints get special color)
+    // Icon based on status
     if (isReviewed) {
       this.iconPath = new vscode.ThemeIcon(
-        isEntrypoint ? "rocket" : "check",
+        "check",
         new vscode.ThemeColor("testing.iconPassed")
       );
     } else if (isRead) {
       this.iconPath = new vscode.ThemeIcon(
-        isEntrypoint ? "rocket" : "eye",
+        "eye",
         new vscode.ThemeColor("charts.yellow")
       );
     } else {
-      this.iconPath = new vscode.ThemeIcon(
-        isEntrypoint ? "rocket" : "circle-outline",
-        isEntrypoint ? new vscode.ThemeColor("charts.blue") : undefined
-      );
+      this.iconPath = new vscode.ThemeIcon("circle-outline");
     }
 
     // Command to navigate to function

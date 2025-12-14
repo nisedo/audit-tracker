@@ -37,6 +37,58 @@ export interface ScopedFile {
 }
 
 /**
+ * Base note interface
+ */
+export interface BaseNote {
+  /** Unique identifier */
+  id: string;
+  /** Note content (markdown) */
+  content: string;
+  /** Creation timestamp */
+  createdAt: number;
+  /** Last update timestamp */
+  updatedAt: number;
+}
+
+/**
+ * Note attached to the entire codebase
+ */
+export interface CodebaseNote extends BaseNote {
+  type: "codebase";
+}
+
+/**
+ * Note attached to a specific file
+ */
+export interface FileNote extends BaseNote {
+  type: "file";
+  filePath: string;
+}
+
+/**
+ * Note attached to a specific function
+ */
+export interface FunctionNote extends BaseNote {
+  type: "function";
+  filePath: string;
+  functionId: string;
+}
+
+/**
+ * Note attached to a specific line
+ */
+export interface LineNote extends BaseNote {
+  type: "line";
+  filePath: string;
+  line: number;
+}
+
+/**
+ * Union type for all note types
+ */
+export type AuditNote = CodebaseNote | FileNote | FunctionNote | LineNote;
+
+/**
  * Root state object persisted to JSON
  */
 export interface AuditTrackerState {
@@ -46,6 +98,8 @@ export interface AuditTrackerState {
   scopePaths: string[];
   /** Map of file path to its scoped data */
   files: Record<string, ScopedFile>;
+  /** All notes */
+  notes: AuditNote[];
   /** Timestamp of last state change */
   lastModified: number;
 }
@@ -57,5 +111,6 @@ export const DEFAULT_STATE: AuditTrackerState = {
   version: 1,
   scopePaths: [],
   files: {},
+  notes: [],
   lastModified: Date.now(),
 };

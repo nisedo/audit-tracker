@@ -25,7 +25,6 @@ export class ScopeDecorationProvider implements vscode.FileDecorationProvider {
       propagate: true,
       badge: "📌",
       tooltip: "In audit scope",
-      color: new vscode.ThemeColor("auditTracker.scopedFileColor"),
     };
   }
 
