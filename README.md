@@ -133,7 +133,7 @@ Works with any language that provides document symbols via VSCode's Language Ser
 
 | Language | Recommended Extension |
 |----------|----------------------|
-| Solidity | [Hardhat for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=NomicFoundation.hardhat-solidity) (`NomicFoundation.hardhat-solidity`) |
+| Solidity | [Solidity by Juan Blanco](https://marketplace.visualstudio.com/items?itemName=JuanBlanco.solidity) (`JuanBlanco.solidity`) |
 | TypeScript/JavaScript | Built-in VSCode support |
 | Rust | rust-analyzer |
 | Go | gopls |
