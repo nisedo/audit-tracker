@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Daily activity summary table with function counts and **line counts** (LOC read/reviewed per day)
 - Detailed activity log showing exactly which functions were read/reviewed and notes added
 - Progress reports saved to `.vscode/{repo-name}-audit-progress.md`
+- Codebase notes file auto-populates with git repo URL and commit hash
 - Hide functions feature: right-click to hide functions from panel (useful for abstract declarations, trivial getters)
 - Show Hidden Functions: right-click file to restore all hidden functions
 - Hidden function count displayed in file description (e.g., "3/10 reviewed (2 hidden)")

@@ -65,7 +65,7 @@ Right-click any function and select **Mark as Entrypoint** to highlight critical
 
 AuditTracker provides two types of notes:
 
-**Codebase Notes**: A markdown file (`.vscode/{repo-name}-audit-tracker-notes.md`) for free-form notes about the entire codebase. Click "Codebase Notes" in the Notes panel to open it.
+**Codebase Notes**: A markdown file (`.vscode/{repo-name}-audit-tracker-notes.md`) for free-form notes about the entire codebase. Click "Codebase Notes" in the Notes panel to open it. The file is auto-populated with the git repo URL and commit hash when first created.
 
 **Line Notes**: Attach notes to specific lines of code:
 1. Right-click on a line and select **AuditTracker: Add Line Note**

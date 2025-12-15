@@ -612,7 +612,34 @@ export async function activate(
         try {
           await vscode.workspace.fs.stat(notesUri);
         } catch {
-          const header = `# ${repoName} - Audit Notes\n\n`;
+          // Get git info for the header
+          let commitHash = "";
+          let repoUrl = "";
+          try {
+            const { exec } = require("child_process");
+            const { promisify } = require("util");
+            const execAsync = promisify(exec);
+
+            const commitResult = await execAsync("git rev-parse HEAD", { cwd: workspaceRoot });
+            commitHash = commitResult.stdout.trim();
+
+            const remoteResult = await execAsync("git remote get-url origin", { cwd: workspaceRoot });
+            repoUrl = remoteResult.stdout.trim();
+          } catch {
+            // Not a git repo or git not available
+          }
+
+          let header = `# ${repoName} - Audit Notes\n\n`;
+          if (commitHash || repoUrl) {
+            header += `---\n`;
+            if (repoUrl) {
+              header += `- **Repo**: ${repoUrl}\n`;
+            }
+            if (commitHash) {
+              header += `- **Commit**: ${commitHash}\n`;
+            }
+            header += `---\n\n`;
+          }
           await vscode.workspace.fs.writeFile(notesUri, Buffer.from(header));
         }
 
