@@ -555,7 +555,7 @@ export async function activate(
         const range = new vscode.Range(func.startLine, 0, func.endLine, 0);
         editor.setDecorations(highlightDecoration, [range]);
 
-        // Remove highlight after 1 second
+        // Remove highlight after 500ms
         setTimeout(() => {
           highlightDecoration.dispose();
         }, 500);

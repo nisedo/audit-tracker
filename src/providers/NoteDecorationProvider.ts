@@ -107,11 +107,4 @@ export class NoteDecorationProvider {
     this.activeEditor = editor;
     this.updateDecorations();
   }
-
-  /**
-   * Dispose of resources
-   */
-  dispose(): void {
-    this.decorationType.dispose();
-  }
 }

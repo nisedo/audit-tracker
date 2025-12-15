@@ -35,7 +35,7 @@ This is a VSCode extension for tracking code audit progress. The codebase follow
 - **NoteDecorationProvider** - Manages gutter icons for lines with notes. Also exports `NoteHoverProvider` for showing note content on hover.
 
 ### Models (`src/models/types.ts`)
-TypeScript interfaces for all data structures: `FunctionState`, `ScopedFile`, `AuditNote` (alias for `LineNote`), `AuditTrackerState`.
+TypeScript interfaces for all data structures: `FunctionState`, `ScopedFile`, `AuditNote` (alias for `LineNote`), `DailyProgress`, `AuditTrackerState`.
 
 ### Data Flow
 1. User adds file/folder to scope via context menu
@@ -47,4 +47,5 @@ TypeScript interfaces for all data structures: `FunctionState`, `ScopedFile`, `A
 ### Key Files
 - State: `.vscode/{repo-name}-audit-tracker.json`
 - Codebase notes: `.vscode/{repo-name}-audit-tracker-notes.md`
+- Progress report: `.vscode/{repo-name}-audit-progress.md`
 - Scope definition: `SCOPE.txt` or `SCOPE.md` at workspace root (optional, auto-loaded)

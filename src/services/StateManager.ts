@@ -233,10 +233,6 @@ export class StateManager {
     return this.state.notes || [];
   }
 
-  getNote(id: string): AuditNote | undefined {
-    return this.state.notes?.find((n) => n.id === id);
-  }
-
   getNotesForLine(filePath: string, line: number): AuditNote[] {
     return (this.state.notes || []).filter(
       (n) => n.type === "line" && n.filePath === filePath && n.line === line
