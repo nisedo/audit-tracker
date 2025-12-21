@@ -101,14 +101,24 @@ export class StateManager {
 
     if (existingFile) {
       // Preserve existing read counts and reviewed status
-      const existingFunctionsMap = new Map<string, FunctionState>();
+      // Match by function NAME (stable) rather than ID (includes line number which changes)
+      const existingByName = new Map<string, FunctionState>();
+      const existingById = new Map<string, FunctionState>();
       for (const fn of existingFile.functions) {
-        existingFunctionsMap.set(fn.id, fn);
+        existingByName.set(fn.name, fn);
+        existingById.set(fn.id, fn);
       }
 
       // Merge new functions with existing state
       const mergedFunctions = functions.map((fn) => {
-        const existing = existingFunctionsMap.get(fn.id);
+        // First try exact ID match (fastest, handles unchanged functions)
+        let existing = existingById.get(fn.id);
+
+        // If no ID match, try matching by name (handles line number changes)
+        if (!existing) {
+          existing = existingByName.get(fn.name);
+        }
+
         if (existing) {
           return {
             ...fn,

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Function state (read/reviewed) no longer resets when code is edited and line numbers shift
+  - Now matches functions by name (stable) instead of only by ID (includes line number)
+  - Preserves user's review progress even when file is modified
+
 ### Changed
 
 - Solidity: Function names no longer show contract prefix (e.g., `getTransactionCount()` instead of `MultiSigTimelock.getTransactionCount()`) since the file is already displayed above
