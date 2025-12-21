@@ -118,10 +118,8 @@ Works with any language that provides document symbols via VSCode's Language Ser
 
 | Language | Recommended Extension |
 |----------|----------------------|
-| Solidity | [Solidity by Juan Blanco](https://marketplace.visualstudio.com/items?itemName=JuanBlanco.solidity) (`JuanBlanco.solidity`) |
-| TypeScript/JavaScript | Built-in VSCode support |
+| Solidity | [Solidity by Ackee Blockchain](https://marketplace.visualstudio.com/items?itemName=AckeeBlockchain.tools-for-solidity) (`AckeeBlockchain.tools-for-solidity`) |
 | Rust | rust-analyzer |
-| Go | gopls |
 
 ## Release Notes
 
