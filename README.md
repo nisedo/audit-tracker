@@ -39,11 +39,14 @@ The scope file is auto-loaded when no existing config is found. Use the **AuditT
 ### Tracking Progress
 
 Functions display with three states:
-- **Unread** (circle icon): Not yet reviewed
-- **Read** (eye icon, yellow): Read but not fully reviewed
-- **Reviewed** (check icon, green): Fully reviewed
 
-**Workflow**: Functions must be marked as "read" before they can be marked as "reviewed". Right-click or use inline buttons to change status.
+| Icon | Status | Description |
+|:----:|--------|-------------|
+| ○ | **Unread** | Not yet reviewed |
+| 👁 | **Read** | Read but not fully reviewed (yellow) |
+| ✓ | **Reviewed** | Fully reviewed (green) |
+
+**Workflow**: Functions must be marked as "read" before they can be marked as "reviewed". Click the inline button or right-click to change status.
 
 ### Hiding Functions
 
@@ -73,10 +76,9 @@ The report is saved to `.vscode/{repo-name}-audit-progress.md` and opens automat
 ### Panel Information
 
 Each function shows:
-- Function name
-- Status (unread/read/reviewed)
+- Status icon (○ unread, 👁 read, ✓ reviewed)
+- Function name (with → prefix for entrypoints)
 - Line count
-- Entrypoint indicator (if applicable)
 
 Each file shows:
 - Relative path
