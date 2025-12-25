@@ -2,7 +2,7 @@
   "name": "audit-tracker",
   "displayName": "AuditTracker",
   "description": "Track code audit progress by marking files in scope and tracking function review status",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "publisher": "nisedo",
   "license": "MIT",
   "repository": {
@@ -26,9 +26,37 @@
     "blockchain"
   ],
   "activationEvents": [
-    "onStartupFinished"
+    "onView:auditTracker.scopeView",
+    "onCommand:auditTracker.addToScope",
+    "onCommand:auditTracker.removeFromScope",
+    "onCommand:auditTracker.markRead",
+    "onCommand:auditTracker.unmarkRead",
+    "onCommand:auditTracker.markReviewed",
+    "onCommand:auditTracker.unmarkReviewed",
+    "onCommand:auditTracker.filterFunctions",
+    "onCommand:auditTracker.clearFunctionFilter",
+    "onCommand:auditTracker.refresh",
+    "onCommand:auditTracker.goToFunction",
+    "onCommand:auditTracker.clearAllState",
+    "onCommand:auditTracker.loadScopeFile",
+    "onCommand:auditTracker.markEntrypoint",
+    "onCommand:auditTracker.unmarkEntrypoint",
+    "onCommand:auditTracker.markImportant",
+    "onCommand:auditTracker.unmarkImportant",
+    "onCommand:auditTracker.hideFunction",
+    "onCommand:auditTracker.showHiddenFunctions",
+    "onCommand:auditTracker.showProgressReport",
+    "workspaceContains:SCOPE.txt",
+    "workspaceContains:SCOPE.md",
+    "workspaceContains:.vscode/*-audit-tracker.json"
   ],
   "main": "./out/extension.js",
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "AuditTracker requires a trusted workspace because it reads and writes tracking data under the workspace’s .vscode directory."
+    }
+  },
   "contributes": {
     "viewsContainers": {
       "activitybar": [
@@ -118,6 +146,16 @@
       {
         "command": "auditTracker.showProgressReport",
         "title": "AuditTracker: Show Progress Report"
+      },
+      {
+        "command": "auditTracker.filterFunctions",
+        "title": "AuditTracker: Filter Functions",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "auditTracker.clearFunctionFilter",
+        "title": "AuditTracker: Clear Function Filter",
+        "icon": "$(clear-all)"
       }
     ],
     "menus": {
@@ -125,19 +163,29 @@
         {
           "command": "auditTracker.addToScope",
           "group": "audit@1",
-          "when": "explorerResourceIsFolder || resourceExtname"
+          "when": "resourceScheme == file"
         },
         {
           "command": "auditTracker.removeFromScope",
           "group": "audit@2",
-          "when": "explorerResourceIsFolder || resourceExtname"
+          "when": "resourceScheme == file"
         }
       ],
       "view/title": [
         {
+          "command": "auditTracker.filterFunctions",
+          "when": "view == auditTracker.scopeView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "auditTracker.clearFunctionFilter",
+          "when": "view == auditTracker.scopeView && auditTracker.filtersActive",
+          "group": "navigation@2"
+        },
+        {
           "command": "auditTracker.refresh",
           "when": "view == auditTracker.scopeView",
-          "group": "navigation"
+          "group": "navigation@3"
         }
       ],
       "view/item/context": [

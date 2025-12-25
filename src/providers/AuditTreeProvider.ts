@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { StateManager } from "../services/StateManager";
-import { FunctionState, ScopedFile } from "../models/types";
+import { FunctionFilters, FunctionState, FunctionStatus, ScopedFile } from "../models/types";
 
 /**
  * Tree item representing a file in scope
@@ -128,8 +128,11 @@ export class AuditTreeProvider
     }
 
     if (element instanceof FileTreeItem) {
-      // File level: return visible functions sorted by status
-      const visibleFunctions = element.scopedFile.functions.filter((f) => !f.isHidden);
+      // File level: return visible functions matching the current filters
+      const functionFilters = this.stateManager.getFunctionFilters();
+      const visibleFunctions = element.scopedFile.functions.filter(
+        (f) => !f.isHidden && this.matchesFunctionFilters(f, functionFilters)
+      );
       const sortedFunctions = [...visibleFunctions].sort((a, b) => {
         // Priority: 0 = unread, 1 = read, 2 = reviewed
         const getPriority = (f: FunctionState): number => {
@@ -148,12 +151,37 @@ export class AuditTreeProvider
     return [];
   }
 
+  private matchesFunctionFilters(
+    func: FunctionState,
+    filters: FunctionFilters
+  ): boolean {
+    const status: FunctionStatus = func.isReviewed
+      ? "reviewed"
+      : func.readCount > 0
+        ? "read"
+        : "unread";
+
+    const statusMatches =
+      filters.statuses.length === 0 || filters.statuses.includes(status);
+
+    const tagMatches =
+      filters.tags.length === 0 ||
+      (filters.tags.includes("entrypoint") && func.isEntrypoint) ||
+      (filters.tags.includes("important") && func.isImportant);
+
+    return statusMatches && tagMatches;
+  }
+
   private getFileItems(): FileTreeItem[] {
     const files = this.stateManager.getAllFiles();
     const items: FileTreeItem[] = [];
+    const functionFilters = this.stateManager.getFunctionFilters();
 
     for (const file of files) {
-      if (file.functions.length > 0) {
+      const hasMatchingFunctions = file.functions.some(
+        (f) => !f.isHidden && this.matchesFunctionFilters(f, functionFilters)
+      );
+      if (hasMatchingFunctions) {
         items.push(new FileTreeItem(file));
       }
     }

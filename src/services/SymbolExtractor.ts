@@ -58,7 +58,6 @@ export class SymbolExtractor {
           isEntrypoint: false,
           isImportant: false,
           isHidden: false,
-          symbolKind: symbol.kind,
         });
       }
 

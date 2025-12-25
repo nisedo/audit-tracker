@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Filter functions in the panel by status and tags (unread/read/reviewed/entrypoint/important)
+
+### Fixed
+
+- Default state is now created fresh (prevents accidental shared state between sessions)
+
+### Changed
+
+## [0.4.0] - 2025-12-25
+
+### Added
+
 - Mark functions as "Important" (❗) for high-priority items that need extra auditor attention
   - Right-click → "Mark as Important" / "Unmark Important"
   - Visual indicator: ❗ prefix on function name
@@ -19,12 +31,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Function state (read/reviewed) no longer resets when code is edited and line numbers shift
   - Now matches functions by name (stable) instead of only by ID (includes line number)
   - Preserves user's review progress even when file is modified
+- Removing a file from AuditTracker now fully removes it from scope (even if it was included via a folder scope)
+- Hidden functions no longer count toward progress metrics (panel + progress report)
+- Prevented rare state loss by serializing concurrent writes to the workspace state JSON file
+- Progress history is normalized on load to handle older state files
 
 ### Changed
 
 - Solidity: Function names no longer show contract prefix (e.g., `getTransactionCount()` instead of `MultiSigTimelock.getTransactionCount()`) since the file is already displayed above
 - "Mark as Unread" and "Unmark Reviewed" moved from inline buttons to right-click context menu only
 - Removed status text (unread/read/reviewed) from function description - icon already shows status
+- Activation is now lazy (view/command/workspaceContains) instead of always on startup
+- Multi-root workspaces are explicitly unsupported (extension warns and disables itself)
+- The extension disables itself when no workspace folder is open
 
 ## [0.3.0] - 2025-12-21
 

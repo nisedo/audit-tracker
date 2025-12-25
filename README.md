@@ -12,6 +12,7 @@ A VSCode extension for tracking code audit progress. Mark files as in-scope, tra
 - **File Decorations**: In-scope files display a 📌 badge in the Explorer
 - **Function Tracking**: Automatically extracts all functions from in-scope files
 - **Review Status**: Track functions as unread, read, or reviewed
+- **Filtering**: Filter the panel by status and tags (unread/read/reviewed/entrypoint/important)
 - **Entrypoints**: Mark critical functions as entrypoints for special visibility
 - **Important Functions**: Mark high-priority functions that need extra auditor attention
 - **SCOPE File Support**: Auto-load scope from `SCOPE.txt` or `SCOPE.md` at workspace root
@@ -37,6 +38,12 @@ lib/utils/
 
 The scope file is auto-loaded when no existing config is found. Use the **AuditTracker: Load Scope File** command to manually reload it.
 
+### Removing from Scope
+
+Use **AuditTracker: Remove from Scope** on a file or folder.
+
+If a folder is in scope and you remove a single file, AuditTracker remembers that file as **excluded**. To include it again, run **AuditTracker: Add to Scope** on that file.
+
 ### Tracking Progress
 
 Functions display with three states:
@@ -48,6 +55,17 @@ Functions display with three states:
 | ✓ | **Reviewed** | Fully reviewed (green) |
 
 **Workflow**: Functions must be marked as "read" before they can be marked as "reviewed". Click the inline button or right-click to change status.
+
+### Filtering Functions
+
+Use **AuditTracker: Filter Functions** (or the filter icon in the panel title) to control which functions are shown.
+
+- Status filters: unread/read/reviewed (you can select any combination)
+- Tag filters: entrypoint/important
+
+Filters are combined as: **(status matches) AND (tag matches)**. If you select multiple tags, a function matches if it has **any** selected tag.
+
+Use **AuditTracker: Clear Function Filter** to reset back to showing everything.
 
 ### Hiding Functions
 
@@ -99,6 +117,12 @@ Each file shows:
 |---------|-------------|
 | `AuditTracker: Add to Scope` | Add file/folder to audit scope |
 | `AuditTracker: Remove from Scope` | Remove from scope |
+| `Mark as Read` | Mark function as read (inline/context menu) |
+| `Mark as Unread` | Mark function as unread (context menu) |
+| `Mark as Reviewed` | Mark function as reviewed (inline/context menu) |
+| `Unmark Reviewed` | Unmark reviewed (context menu) |
+| `AuditTracker: Filter Functions` | Filter which functions are shown in the panel |
+| `AuditTracker: Clear Function Filter` | Clear the function filter |
 | `AuditTracker: Load Scope File` | Load/reload scope from SCOPE.txt or SCOPE.md |
 | `AuditTracker: Clear All Tracking State` | Reset all tracking data |
 | `AuditTracker: Show Progress Report` | Generate and open daily progress report |
@@ -113,6 +137,9 @@ Each file shows:
 ## Requirements
 
 - VSCode 1.85.0 or higher
+- Trusted workspace (AuditTracker writes tracking files under `.vscode/`)
+- Local file system workspace only (no remote/virtual workspaces)
+- Single-folder workspace only (multi-root workspaces are not supported)
 - Language server for your target language (for symbol extraction)
 
 ## Extension Settings
@@ -120,6 +147,13 @@ Each file shows:
 This extension stores state in `.vscode/{repo-name}-audit-tracker.json` within your workspace, where `{repo-name}` is the name of your workspace folder.
 
 Progress reports are generated at `.vscode/{repo-name}-audit-progress.md`.
+
+If you don’t want to commit these files, add them to your repo’s `.gitignore`:
+
+```
+.vscode/*-audit-tracker.json
+.vscode/*-audit-progress.md
+```
 
 ## Language Support
 
@@ -136,27 +170,7 @@ Works with any language that provides document symbols via VSCode's Language Ser
 
 ## Release Notes
 
-### 0.3.0
-
-- Removed notes feature for a cleaner, focused experience
-
-### 0.2.0
-
-- Daily progress tracking with detailed markdown reports
-- Hide/unhide functions from panel
-- Read-before-review workflow enforcement
-- Faster navigation highlighting (500ms)
-- Simplified symbol extraction (requires single language extension per language)
-
-### 0.1.0
-
-Initial release:
-- Scope management via context menu
-- Function tracking (unread/read/reviewed)
-- Entrypoint marking
-- SCOPE file auto-loading and manual loading command
-- Function navigation with highlighting
-- Per-workspace state persistence with dynamic naming
+See `CHANGELOG.md`.
 
 ## License
 

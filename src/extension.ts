@@ -9,7 +9,14 @@ import {
   FileTreeItem,
 } from "./providers/AuditTreeProvider";
 import { ScopeDecorationProvider } from "./providers/ScopeDecorationProvider";
-import { FunctionState, DailyProgress } from "./models/types";
+import {
+  DEFAULT_FUNCTION_FILTERS,
+  FunctionFilters,
+  FunctionStatus,
+  FunctionTag,
+  FunctionState,
+  DailyProgress,
+} from "./models/types";
 
 interface ProgressTotals {
   totalFunctions: number;
@@ -49,9 +56,9 @@ function generateProgressReport(
   report += `Generated: ${timestamp}\n\n`;
 
   // Overall Progress
-  report += `## Overall Progress\n\n`;
-  report += `| Metric | Progress | Percentage |\n`;
-  report += `|--------|----------|------------|\n`;
+  report += "## Overall Progress\n\n";
+  report += "| Metric | Progress | Percentage |\n";
+  report += "|--------|----------|------------|\n";
   report += `| Functions Read | ${totals.totalRead}/${totals.totalFunctions} | ${readPct}% |\n`;
   report += `| Functions Reviewed | ${totals.totalReviewed}/${totals.totalFunctions} | ${reviewedPct}% |\n`;
   report += `| Files Read | ${totals.filesFullyRead}/${totals.totalFiles} | ${filesReadPct}% |\n`;
@@ -59,28 +66,26 @@ function generateProgressReport(
 
   // Daily Activity Summary
   if (history.length === 0) {
-    report += `## Daily Activity\n\n`;
-    report += `*No activity recorded yet.*\n`;
+    report += "## Daily Activity\n\n";
+    report += "*No activity recorded yet.*\n";
     return report;
   }
 
   // Sort history by date descending
   const sortedHistory = [...history].sort((a, b) => b.date.localeCompare(a.date));
 
-  report += `## Daily Activity Summary\n\n`;
-  report += `| Date | Funcs Read | Lines Read | Funcs Reviewed | Lines Reviewed | Files Read | Files Reviewed |\n`;
-  report += `|------|------------|------------|----------------|----------------|------------|----------------|\n`;
+  report += "## Daily Activity Summary\n\n";
+  report += "| Date | Funcs Read | Lines Read | Funcs Reviewed | Lines Reviewed | Files Read | Files Reviewed |\n";
+  report += "|------|------------|------------|----------------|----------------|------------|----------------|\n";
 
   for (const day of sortedHistory) {
-    const linesRead = day.linesRead || 0;
-    const linesReviewed = day.linesReviewed || 0;
-    report += `| ${day.date} | ${day.functionsRead} | ${linesRead} | ${day.functionsReviewed} | ${linesReviewed} | ${day.filesRead} | ${day.filesReviewed} |\n`;
+    report += `| ${day.date} | ${day.functionsRead} | ${day.linesRead} | ${day.functionsReviewed} | ${day.linesReviewed} | ${day.filesRead} | ${day.filesReviewed} |\n`;
   }
 
-  report += `\n---\n\n`;
+  report += "\n---\n\n";
 
   // Detailed Activity Log
-  report += `## Detailed Activity Log\n\n`;
+  report += "## Detailed Activity Log\n\n";
 
   for (const day of sortedHistory) {
     if (day.actions.length === 0) {
@@ -100,7 +105,7 @@ function generateProgressReport(
       for (const action of functionsRead) {
         report += `- \`${action.filePath}\` → \`${action.functionName}\`\n`;
       }
-      report += `\n`;
+      report += "\n";
     }
 
     if (functionsReviewed.length > 0) {
@@ -108,36 +113,169 @@ function generateProgressReport(
       for (const action of functionsReviewed) {
         report += `- \`${action.filePath}\` → \`${action.functionName}\`\n`;
       }
-      report += `\n`;
+      report += "\n";
     }
 
     if (filesRead.length > 0 || filesReviewed.length > 0) {
-      report += `**Files Completed:**\n`;
+      report += "**Files Completed:**\n";
       for (const action of filesRead) {
         report += `- \`${action.filePath}\` (read)\n`;
       }
       for (const action of filesReviewed) {
         report += `- \`${action.filePath}\` (reviewed)\n`;
       }
-      report += `\n`;
+      report += "\n";
     }
   }
 
   return report;
 }
 
+const NO_WORKSPACE_MESSAGE = "AuditTracker requires an open folder workspace.";
+
+const MULTI_ROOT_UNSUPPORTED_MESSAGE =
+  "AuditTracker does not support multi-root workspaces. Open a single folder workspace to use this extension.";
+
+const DISABLED_COMMANDS = [
+  "auditTracker.addToScope",
+  "auditTracker.removeFromScope",
+  "auditTracker.markRead",
+  "auditTracker.unmarkRead",
+  "auditTracker.markReviewed",
+  "auditTracker.unmarkReviewed",
+  "auditTracker.filterFunctions",
+  "auditTracker.clearFunctionFilter",
+  "auditTracker.refresh",
+  "auditTracker.goToFunction",
+  "auditTracker.clearAllState",
+  "auditTracker.loadScopeFile",
+  "auditTracker.markEntrypoint",
+  "auditTracker.unmarkEntrypoint",
+  "auditTracker.markImportant",
+  "auditTracker.unmarkImportant",
+  "auditTracker.hideFunction",
+  "auditTracker.showHiddenFunctions",
+  "auditTracker.showProgressReport",
+] as const;
+
+interface FilterPickItem extends vscode.QuickPickItem {
+  group?: "status" | "tag";
+  value?: FunctionStatus | FunctionTag;
+}
+
+let treeView: vscode.TreeView<vscode.TreeItem> | undefined;
+
+class DisabledTreeProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
+  constructor(
+    private readonly title: string,
+    private readonly descriptionText: string,
+    private readonly tooltipText: string
+  ) {}
+
+  getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
+    return element;
+  }
+
+  async getChildren(): Promise<vscode.TreeItem[]> {
+    const item = new vscode.TreeItem(
+      this.title,
+      vscode.TreeItemCollapsibleState.None
+    );
+    item.description = this.descriptionText;
+    item.tooltip = this.tooltipText;
+    item.iconPath = new vscode.ThemeIcon(
+      "warning",
+      new vscode.ThemeColor("problemsWarningIcon.foreground")
+    );
+    return [item];
+  }
+}
+
+function registerDisabledMode(
+  context: vscode.ExtensionContext,
+  message: string,
+  treeTitle: string,
+  treeDescription: string
+): void {
+  const treeView = vscode.window.createTreeView("auditTracker.scopeView", {
+    treeDataProvider: new DisabledTreeProvider(treeTitle, treeDescription, message),
+    showCollapseAll: false,
+  });
+
+  context.subscriptions.push(
+    treeView,
+    ...DISABLED_COMMANDS.map((command) =>
+      vscode.commands.registerCommand(command, async () => {
+        vscode.window.showErrorMessage(message);
+      })
+    )
+  );
+}
+
+function isFilterActive(filters: FunctionFilters): boolean {
+  const allStatuses = DEFAULT_FUNCTION_FILTERS.statuses;
+  const statusesAreDefault =
+    filters.statuses.length === allStatuses.length &&
+    allStatuses.every((s) => filters.statuses.includes(s));
+  return !statusesAreDefault || filters.tags.length > 0;
+}
+
+function formatFilterMessage(filters: FunctionFilters): string | undefined {
+  if (!isFilterActive(filters)) {
+    return undefined;
+  }
+
+  const labelForStatus: Record<FunctionStatus, string> = {
+    unread: "Unread",
+    read: "Read",
+    reviewed: "Reviewed",
+  };
+  const labelForTag: Record<FunctionTag, string> = {
+    entrypoint: "Entrypoint",
+    important: "Important",
+  };
+
+  const parts: string[] = [];
+
+  if (
+    filters.statuses.length !== DEFAULT_FUNCTION_FILTERS.statuses.length ||
+    !DEFAULT_FUNCTION_FILTERS.statuses.every((s) => filters.statuses.includes(s))
+  ) {
+    parts.push(`Status: ${filters.statuses.map((s) => labelForStatus[s]).join(", ")}`);
+  }
+
+  if (filters.tags.length > 0) {
+    parts.push(`Tags: ${filters.tags.map((t) => labelForTag[t]).join(", ")}`);
+  }
+
+  return parts.length > 0 ? `Filtered (${parts.join(" · ")})` : undefined;
+}
+
+function updateFilterUi(filters: FunctionFilters): void {
+  void vscode.commands.executeCommand(
+    "setContext",
+    "auditTracker.filtersActive",
+    isFilterActive(filters)
+  );
+
+  if (treeView) {
+    treeView.message = formatFilterMessage(filters);
+  }
+}
+
+function isWithinWorkspace(workspaceRoot: string, filePath: string): boolean {
+  const rel = path.relative(workspaceRoot, filePath);
+  return rel === "" || (!rel.startsWith("..") && !path.isAbsolute(rel));
+}
+
 /**
  * Load scope from SCOPE.txt or SCOPE.md file if present
  */
 async function loadScopeFile(
-  workspaceRoot: string | undefined,
+  workspaceRoot: string,
   scopeManager: ScopeManager,
   stateManager: StateManager
 ): Promise<number> {
-  if (!workspaceRoot) {
-    return 0;
-  }
-
   const scopeFiles = ["SCOPE.txt", "SCOPE.md"];
   let scopeContent: string | undefined;
 
@@ -162,15 +300,18 @@ async function loadScopeFile(
 
   for (const line of lines) {
     // Clean the line and skip empty/comment lines
-    const trimmed = line.trim();
+    let trimmed = line.trim();
+    if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
+      trimmed = trimmed.slice(2).trim();
+    }
     if (!trimmed || trimmed.startsWith("#") || trimmed.startsWith("//")) {
       continue;
     }
 
-    // Resolve relative path to absolute
-    const filePath = path.isAbsolute(trimmed)
-      ? trimmed
-      : path.join(workspaceRoot, trimmed);
+    const filePath = path.resolve(workspaceRoot, trimmed);
+    if (!isWithinWorkspace(workspaceRoot, filePath)) {
+      continue;
+    }
 
     try {
       const uri = vscode.Uri.file(filePath);
@@ -197,7 +338,30 @@ let decorationProvider: ScopeDecorationProvider;
 export async function activate(
   context: vscode.ExtensionContext
 ): Promise<void> {
-  const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+  const workspaceFolderCount = vscode.workspace.workspaceFolders?.length ?? 0;
+  if (workspaceFolderCount === 0) {
+    vscode.window.showWarningMessage(NO_WORKSPACE_MESSAGE);
+    registerDisabledMode(
+      context,
+      NO_WORKSPACE_MESSAGE,
+      "Open a folder to use AuditTracker",
+      "No workspace folder open"
+    );
+    return;
+  }
+
+  if (workspaceFolderCount > 1) {
+    vscode.window.showWarningMessage(MULTI_ROOT_UNSUPPORTED_MESSAGE);
+    registerDisabledMode(
+      context,
+      MULTI_ROOT_UNSUPPORTED_MESSAGE,
+      "Multi-root workspaces are not supported",
+      "Open a single folder workspace"
+    );
+    return;
+  }
+
+  const workspaceRoot = vscode.workspace.workspaceFolders![0].uri.fsPath;
 
   // Initialize services
   stateManager = new StateManager(workspaceRoot);
@@ -222,15 +386,17 @@ export async function activate(
     );
     if (addedFiles > 0) {
       treeProvider.refresh();
-      decorationProvider.refreshAll();
+      decorationProvider.refresh();
     }
   }
 
   // Register tree view
-  const treeView = vscode.window.createTreeView("auditTracker.scopeView", {
+  const auditTreeView = vscode.window.createTreeView("auditTracker.scopeView", {
     treeDataProvider: treeProvider,
     showCollapseAll: true,
   });
+  treeView = auditTreeView;
+  updateFilterUi(stateManager.getFunctionFilters());
 
   // Register commands
   context.subscriptions.push(
@@ -249,10 +415,20 @@ export async function activate(
           }
         }
 
+        if (uri.scheme !== "file") {
+          vscode.window.showErrorMessage("Only local files and folders are supported");
+          return;
+        }
+
+        if (!isWithinWorkspace(workspaceRoot, uri.fsPath)) {
+          vscode.window.showErrorMessage("Path must be inside the workspace folder");
+          return;
+        }
+
         const files = await scopeManager.addToScope(uri);
         await stateManager.save();
         treeProvider.refresh();
-        decorationProvider.refresh(files.map((f) => vscode.Uri.file(f)));
+        decorationProvider.refresh([uri, ...files.map((f) => vscode.Uri.file(f))]);
 
         const functionCount = stateManager
           .getAllFiles()
@@ -268,14 +444,64 @@ export async function activate(
       "auditTracker.removeFromScope",
       async (uriOrItem: vscode.Uri | FileTreeItem) => {
         let uri: vscode.Uri;
+        let decorationUris: vscode.Uri[] = [];
 
         if (uriOrItem instanceof FileTreeItem) {
-          uri = vscode.Uri.file(uriOrItem.scopedFile.filePath);
-          // Remove just this file from state
-          stateManager.removeFile(uriOrItem.scopedFile.filePath);
+          const filePath = uriOrItem.scopedFile.filePath;
+          uri = vscode.Uri.file(filePath);
+
+          // Remove file from tracking even if it was included via a folder scope
+          if (stateManager.getScopePaths().includes(filePath)) {
+            stateManager.removeScopePath(filePath);
+          }
+          stateManager.addExcludedPath(filePath);
+          stateManager.removeFile(filePath);
+          decorationUris = [uri];
         } else if (uriOrItem) {
           uri = uriOrItem;
-          await scopeManager.removeFromScope(uri);
+
+          if (uri.scheme !== "file") {
+            vscode.window.showErrorMessage("Only local files and folders are supported");
+            return;
+          }
+
+          if (!isWithinWorkspace(workspaceRoot, uri.fsPath)) {
+            vscode.window.showErrorMessage("Path must be inside the workspace folder");
+            return;
+          }
+
+          let stat: vscode.FileStat;
+          try {
+            stat = await vscode.workspace.fs.stat(uri);
+          } catch {
+            vscode.window.showErrorMessage("Selected path does not exist");
+            return;
+          }
+
+          if (stat.type === vscode.FileType.File) {
+            const filePath = uri.fsPath;
+            if (stateManager.getScopePaths().includes(filePath)) {
+              stateManager.removeScopePath(filePath);
+            }
+            stateManager.addExcludedPath(filePath);
+            stateManager.removeFile(filePath);
+            decorationUris = [uri];
+          } else if (stat.type === vscode.FileType.Directory) {
+            const folderPath = uri.fsPath;
+            const trackedInFolder = stateManager
+              .getAllFiles()
+              .filter(
+                (f) =>
+                  f.filePath === folderPath ||
+                  f.filePath.startsWith(folderPath + path.sep)
+              )
+              .map((f) => vscode.Uri.file(f.filePath));
+            decorationUris = [uri, ...trackedInFolder];
+            await scopeManager.removeFromScope(uri);
+          } else {
+            vscode.window.showErrorMessage("Unsupported file type");
+            return;
+          }
         } else {
           vscode.window.showErrorMessage("No file or folder selected");
           return;
@@ -283,7 +509,7 @@ export async function activate(
 
         await stateManager.save();
         treeProvider.refresh();
-        decorationProvider.refresh([uri]);
+        decorationProvider.refresh(decorationUris.length > 0 ? decorationUris : [uri]);
         vscode.window.showInformationMessage("Removed from scope");
       }
     ),
@@ -310,7 +536,10 @@ export async function activate(
 
           // Check if file is now fully read
           if (file) {
-            const allRead = file.functions.every(f => f.readCount > 0 || f.id === func.id);
+            const visibleFunctions = file.functions.filter((f) => !f.isHidden);
+            const allRead =
+              visibleFunctions.length > 0 &&
+              visibleFunctions.every((f) => f.readCount > 0);
             if (allRead) {
               stateManager.recordFileRead(relativePath);
             }
@@ -365,7 +594,10 @@ export async function activate(
 
           // Check if file is now fully reviewed
           if (file) {
-            const allReviewed = file.functions.every(f => f.isReviewed || f.id === func.id);
+            const visibleFunctions = file.functions.filter((f) => !f.isHidden);
+            const allReviewed =
+              visibleFunctions.length > 0 &&
+              visibleFunctions.every((f) => f.isReviewed);
             if (allReviewed) {
               stateManager.recordFileReviewed(relativePath);
             }
@@ -486,6 +718,84 @@ export async function activate(
       treeProvider.refresh();
     }),
 
+    // Filter functions shown in the panel
+    vscode.commands.registerCommand("auditTracker.filterFunctions", async () => {
+      const currentFilters = stateManager.getFunctionFilters();
+
+      const picks: FilterPickItem[] = [
+        { label: "Status", kind: vscode.QuickPickItemKind.Separator },
+        {
+          label: "Unread",
+          group: "status",
+          value: "unread",
+          picked: currentFilters.statuses.includes("unread"),
+        },
+        {
+          label: "Read",
+          group: "status",
+          value: "read",
+          picked: currentFilters.statuses.includes("read"),
+        },
+        {
+          label: "Reviewed",
+          group: "status",
+          value: "reviewed",
+          picked: currentFilters.statuses.includes("reviewed"),
+        },
+        { label: "Tags", kind: vscode.QuickPickItemKind.Separator },
+        {
+          label: "Entrypoint",
+          group: "tag",
+          value: "entrypoint",
+          picked: currentFilters.tags.includes("entrypoint"),
+        },
+        {
+          label: "Important",
+          group: "tag",
+          value: "important",
+          picked: currentFilters.tags.includes("important"),
+        },
+      ];
+
+      const selected = await vscode.window.showQuickPick(picks, {
+        canPickMany: true,
+        title: "AuditTracker: Filter Functions",
+        placeHolder: "Select which functions to show in the panel",
+        ignoreFocusOut: true,
+      });
+
+      if (!selected) {
+        return;
+      }
+
+      const statuses = selected
+        .filter((item): item is FilterPickItem => item.group === "status")
+        .map((item) => item.value as FunctionStatus);
+
+      const tags = selected
+        .filter((item): item is FilterPickItem => item.group === "tag")
+        .map((item) => item.value as FunctionTag);
+
+      stateManager.setFunctionFilters({
+        statuses: statuses.length > 0 ? statuses : [...DEFAULT_FUNCTION_FILTERS.statuses],
+        tags,
+      });
+      await stateManager.save();
+      updateFilterUi(stateManager.getFunctionFilters());
+      treeProvider.refresh();
+    }),
+
+    // Clear function filters
+    vscode.commands.registerCommand(
+      "auditTracker.clearFunctionFilter",
+      async () => {
+        stateManager.clearFunctionFilters();
+        await stateManager.save();
+        updateFilterUi(stateManager.getFunctionFilters());
+        treeProvider.refresh();
+      }
+    ),
+
     // Load scope from SCOPE.txt or SCOPE.md file
     vscode.commands.registerCommand("auditTracker.loadScopeFile", async () => {
       const addedFiles = await loadScopeFile(
@@ -495,7 +805,7 @@ export async function activate(
       );
       if (addedFiles > 0) {
         treeProvider.refresh();
-        decorationProvider.refreshAll();
+        decorationProvider.refresh();
         vscode.window.showInformationMessage(
           `Loaded ${addedFiles} file(s) from SCOPE file`
         );
@@ -559,6 +869,7 @@ export async function activate(
       if (confirm === "Yes, Clear All") {
         stateManager.clearAllState();
         await stateManager.save();
+        updateFilterUi(stateManager.getFunctionFilters());
         treeProvider.refresh();
         decorationProvider.refresh(allFiles);
         vscode.window.showInformationMessage("AuditTracker state cleared");
@@ -577,18 +888,28 @@ export async function activate(
         const repoName = path.basename(workspaceRoot);
         const history = stateManager.getProgressHistory();
         const allFiles = stateManager.getAllFiles();
-        const allFunctions = stateManager.getAllFunctions();
 
         // Calculate current totals
-        const totalFunctions = allFunctions.length;
-        const totalRead = allFunctions.filter((f) => f.readCount > 0).length;
-        const totalReviewed = allFunctions.filter((f) => f.isReviewed).length;
-        const totalFiles = allFiles.length;
-        const filesFullyRead = allFiles.filter((f) =>
-          f.functions.length > 0 && f.functions.every((fn) => fn.readCount > 0)
+        const filesWithVisibleFunctions = allFiles
+          .map((f) => ({
+            file: f,
+            visibleFunctions: f.functions.filter((fn) => !fn.isHidden),
+          }))
+          .filter((f) => f.visibleFunctions.length > 0);
+
+        const visibleFunctions = filesWithVisibleFunctions.flatMap(
+          (f) => f.visibleFunctions
+        );
+
+        const totalFunctions = visibleFunctions.length;
+        const totalRead = visibleFunctions.filter((f) => f.readCount > 0).length;
+        const totalReviewed = visibleFunctions.filter((f) => f.isReviewed).length;
+        const totalFiles = filesWithVisibleFunctions.length;
+        const filesFullyRead = filesWithVisibleFunctions.filter((f) =>
+          f.visibleFunctions.every((fn) => fn.readCount > 0)
         ).length;
-        const filesFullyReviewed = allFiles.filter((f) =>
-          f.functions.length > 0 && f.functions.every((fn) => fn.isReviewed)
+        const filesFullyReviewed = filesWithVisibleFunctions.filter((f) =>
+          f.visibleFunctions.every((fn) => fn.isReviewed)
         ).length;
 
         // Generate report
@@ -624,11 +945,11 @@ export async function activate(
       }
     ),
 
-    treeView
+    auditTreeView
   );
 
   // Watch for file changes to update symbols
-  const fileWatcher = vscode.workspace.createFileSystemWatcher("**/*");
+  const fileWatcher = vscode.workspace.createFileSystemWatcher("**/*", true);
 
   fileWatcher.onDidChange(async (uri) => {
     if (scopeManager.isInScope(uri.fsPath)) {

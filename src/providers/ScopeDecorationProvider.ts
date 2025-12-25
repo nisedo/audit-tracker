@@ -28,24 +28,16 @@ export class ScopeDecorationProvider implements vscode.FileDecorationProvider {
     };
   }
 
-  // Refresh decorations for specific URIs
+  // Refresh decorations for specific URIs (or all tracked files if omitted)
   refresh(uris?: vscode.Uri[]): void {
     if (uris) {
       this._onDidChangeFileDecorations.fire(uris);
     } else {
-      // Fire undefined to refresh all
       this._onDidChangeFileDecorations.fire(
         this.stateManager
           .getAllFiles()
           .map((f) => vscode.Uri.file(f.filePath))
       );
     }
-  }
-
-  // Refresh all decorations
-  refreshAll(): void {
-    const allFiles = this.stateManager.getAllFiles();
-    const uris = allFiles.map((f) => vscode.Uri.file(f.filePath));
-    this._onDidChangeFileDecorations.fire(uris);
   }
 }

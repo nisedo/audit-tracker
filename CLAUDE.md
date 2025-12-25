@@ -30,11 +30,19 @@ npm run compile && npx vsce package --allow-missing-repository && code --install
 
 This is a VSCode extension for tracking code audit progress. The codebase follows a layered architecture:
 
+## Workspace Support
+
+AuditTracker intentionally supports **single-folder, local file system workspaces only**.
+
+- If no folder is open, the extension disables itself.
+- If VSCode is opened with a multi-root workspace, the extension warns and disables itself to avoid ambiguous state storage and relative paths.
+
 ### Entry Point
 - `src/extension.ts` - Activates extension, registers all commands, tree views, and providers. Contains command implementations inline.
 
 ### Services Layer (`src/services/`)
-- **StateManager** - Persists state to `.vscode/{repo-name}-audit-tracker.json`. Manages scope paths, scoped files with functions, and progress history. All state mutations go through this class.
+- **StateManager** - Persists state to `.vscode/{repo-name}-audit-tracker.json`. Manages scope paths, `excludedPaths`, `functionFilters`, scoped files with functions, and progress history. All state mutations go through this class.
+- **StateManager** also tracks `excludedPaths` for files explicitly removed from scope (useful when a folder is in scope but a specific file should be skipped).
 - **ScopeManager** - Orchestrates adding/removing files from scope. Expands folders to files, delegates to SymbolExtractor, updates StateManager.
 - **SymbolExtractor** - Uses VSCode's `DocumentSymbolProvider` API to extract functions/methods from files.
 
@@ -45,7 +53,7 @@ This is a VSCode extension for tracking code audit progress. The codebase follow
 ### Models (`src/models/types.ts`)
 TypeScript interfaces for all data structures: `FunctionState`, `ScopedFile`, `DailyProgress`, `AuditTrackerState`.
 
-Key `FunctionState` fields: `id`, `name`, `filePath`, `startLine`, `endLine`, `readCount`, `isReviewed`, `isEntrypoint`, `isImportant`, `isHidden`, `symbolKind`.
+Key `FunctionState` fields: `id`, `name`, `filePath`, `startLine`, `endLine`, `readCount`, `isReviewed`, `isEntrypoint`, `isImportant`, `isHidden`.
 
 ### Data Flow
 1. User adds file/folder to scope via context menu

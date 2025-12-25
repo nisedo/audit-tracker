@@ -2,4 +2,6 @@ out/
 node_modules/
 .vscode-test/
 *.vsix
+.vscode/*-audit-tracker.json
+.vscode/*-audit-progress.md
 .DS_Store

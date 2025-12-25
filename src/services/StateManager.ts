@@ -3,17 +3,23 @@ import * as path from "path";
 import {
   AuditTrackerState,
   DailyProgress,
-  DEFAULT_STATE,
+  DEFAULT_FUNCTION_FILTERS,
   FunctionState,
+  FunctionFilters,
+  FunctionStatus,
+  FunctionTag,
   ScopedFile,
+  STATE_VERSION,
+  createDefaultState,
 } from "../models/types";
 
 export class StateManager {
   private state: AuditTrackerState;
   private stateFilePath: vscode.Uri | undefined;
+  private saveChain: Promise<void> = Promise.resolve();
 
   constructor(private workspaceRoot: string | undefined) {
-    this.state = { ...DEFAULT_STATE };
+    this.state = createDefaultState();
     if (workspaceRoot) {
       const repoName = path.basename(workspaceRoot);
       const stateFileName = `${repoName}-audit-tracker.json`;
@@ -32,15 +38,188 @@ export class StateManager {
       const content = await vscode.workspace.fs.readFile(this.stateFilePath);
       const parsed = JSON.parse(content.toString()) as AuditTrackerState;
 
-      // Merge with defaults to handle missing fields
-      this.state = {
-        ...DEFAULT_STATE,
+      // Merge with defaults + normalize to handle schema evolution.
+      this.state = this.normalizeState({
+        ...createDefaultState(),
         ...parsed,
-      };
+      });
     } catch {
       // File doesn't exist or is invalid, use defaults
-      this.state = { ...DEFAULT_STATE };
+      this.state = createDefaultState();
     }
+  }
+
+  private normalizeState(state: AuditTrackerState): AuditTrackerState {
+    const unique = (values: string[]): string[] => [...new Set(values)];
+    const isFunctionStatus = (value: string): value is FunctionStatus =>
+      value === "unread" || value === "read" || value === "reviewed";
+    const isFunctionTag = (value: string): value is FunctionTag =>
+      value === "entrypoint" || value === "important";
+
+    const scopePaths = unique(
+      Array.isArray(state.scopePaths)
+        ? state.scopePaths.filter((p): p is string => typeof p === "string" && p.length > 0)
+        : []
+    );
+
+    const excludedPaths = unique(
+      Array.isArray(state.excludedPaths)
+        ? state.excludedPaths.filter((p): p is string => typeof p === "string" && p.length > 0)
+        : []
+    );
+
+    const rawFilters = state.functionFilters as unknown as {
+      statuses?: unknown;
+      tags?: unknown;
+    };
+
+    const statuses = unique(
+      rawFilters && Array.isArray(rawFilters.statuses)
+        ? rawFilters.statuses
+            .filter((s): s is string => typeof s === "string")
+            .filter(isFunctionStatus)
+        : []
+    ) as FunctionStatus[];
+
+    const tags = unique(
+      rawFilters && Array.isArray(rawFilters.tags)
+        ? rawFilters.tags
+            .filter((t): t is string => typeof t === "string")
+            .filter(isFunctionTag)
+        : []
+    ) as FunctionTag[];
+
+    const functionFilters: FunctionFilters = {
+      statuses: statuses.length > 0 ? statuses : [...DEFAULT_FUNCTION_FILTERS.statuses],
+      tags,
+    };
+
+    const files: Record<string, ScopedFile> = {};
+    if (state.files && typeof state.files === "object") {
+      for (const [filePath, file] of Object.entries(state.files)) {
+        if (!file || typeof file !== "object") {
+          continue;
+        }
+
+        const relativePath =
+          typeof file.relativePath === "string" && file.relativePath.length > 0
+            ? file.relativePath
+            : path.basename(filePath);
+
+        const functions: FunctionState[] = Array.isArray(file.functions)
+          ? file.functions
+              .filter((fn) => Boolean(fn) && typeof fn === "object")
+              .map((fn) => {
+                const startLine =
+                  typeof fn.startLine === "number" && Number.isFinite(fn.startLine)
+                    ? fn.startLine
+                    : 0;
+                const endLine =
+                  typeof fn.endLine === "number" && Number.isFinite(fn.endLine)
+                    ? fn.endLine
+                    : startLine;
+
+                const name = typeof fn.name === "string" ? fn.name : "unknown";
+                const id =
+                  typeof fn.id === "string" && fn.id.length > 0
+                    ? fn.id
+                    : `${filePath}#${name}#${startLine}`;
+
+                return {
+                  id,
+                  name,
+                  filePath,
+                  startLine,
+                  endLine: Math.max(endLine, startLine),
+                  readCount:
+                    typeof fn.readCount === "number" && fn.readCount > 0 ? 1 : 0,
+                  isReviewed: Boolean(fn.isReviewed),
+                  isEntrypoint: Boolean(fn.isEntrypoint),
+                  isImportant: Boolean(fn.isImportant),
+                  isHidden: Boolean(fn.isHidden),
+                };
+              })
+          : [];
+
+        files[filePath] = {
+          filePath,
+          relativePath,
+          functions,
+        };
+      }
+    }
+
+    const progressHistory: DailyProgress[] = Array.isArray(state.progressHistory)
+      ? state.progressHistory
+          .filter((entry) => Boolean(entry) && typeof entry === "object")
+          .map((entry) => {
+            const date = typeof entry.date === "string" ? entry.date : "unknown";
+
+            const actions = Array.isArray(entry.actions)
+              ? entry.actions
+                  .filter((a) => Boolean(a) && typeof a === "object")
+                  .filter((a) =>
+                    a.type === "functionRead" ||
+                    a.type === "functionReviewed" ||
+                    a.type === "fileRead" ||
+                    a.type === "fileReviewed"
+                  )
+                  .map((a) => ({
+                    type: a.type,
+                    filePath: typeof a.filePath === "string" ? a.filePath : "unknown",
+                    functionName:
+                      typeof a.functionName === "string" ? a.functionName : undefined,
+                    lineCount:
+                      typeof a.lineCount === "number" && Number.isFinite(a.lineCount)
+                        ? a.lineCount
+                        : undefined,
+                  }))
+              : [];
+
+            return {
+              date,
+              functionsRead:
+                typeof entry.functionsRead === "number" && Number.isFinite(entry.functionsRead)
+                  ? entry.functionsRead
+                  : 0,
+              functionsReviewed:
+                typeof entry.functionsReviewed === "number" &&
+                Number.isFinite(entry.functionsReviewed)
+                  ? entry.functionsReviewed
+                  : 0,
+              linesRead:
+                typeof entry.linesRead === "number" && Number.isFinite(entry.linesRead)
+                  ? entry.linesRead
+                  : 0,
+              linesReviewed:
+                typeof entry.linesReviewed === "number" &&
+                Number.isFinite(entry.linesReviewed)
+                  ? entry.linesReviewed
+                  : 0,
+              filesRead:
+                typeof entry.filesRead === "number" && Number.isFinite(entry.filesRead)
+                  ? entry.filesRead
+                  : 0,
+              filesReviewed:
+                typeof entry.filesReviewed === "number" &&
+                Number.isFinite(entry.filesReviewed)
+                  ? entry.filesReviewed
+                  : 0,
+              actions,
+            };
+          })
+      : [];
+
+    return {
+      version: typeof state.version === "number" ? state.version : STATE_VERSION,
+      scopePaths,
+      excludedPaths,
+      functionFilters,
+      files,
+      progressHistory,
+      lastModified:
+        typeof state.lastModified === "number" ? state.lastModified : Date.now(),
+    };
   }
 
   async save(): Promise<void> {
@@ -48,25 +227,55 @@ export class StateManager {
       return;
     }
 
-    // Ensure .vscode directory exists
-    const vscodeDir = vscode.Uri.file(path.join(this.workspaceRoot, ".vscode"));
-    try {
-      await vscode.workspace.fs.createDirectory(vscodeDir);
-    } catch {
-      // Directory might already exist
-    }
+    const runSave = async (): Promise<void> => {
+      // Ensure .vscode directory exists
+      const vscodeDir = vscode.Uri.file(
+        path.join(this.workspaceRoot as string, ".vscode")
+      );
+      try {
+        await vscode.workspace.fs.createDirectory(vscodeDir);
+      } catch {
+        // Directory might already exist
+      }
 
-    this.state.lastModified = Date.now();
-    const content = Buffer.from(JSON.stringify(this.state, null, 2), "utf-8");
-    await vscode.workspace.fs.writeFile(this.stateFilePath, content);
-  }
+      this.state.lastModified = Date.now();
+      const content = Buffer.from(JSON.stringify(this.state, null, 2), "utf-8");
+      await vscode.workspace.fs.writeFile(this.stateFilePath as vscode.Uri, content);
+    };
 
-  getState(): AuditTrackerState {
-    return this.state;
+    // Serialize writes to avoid out-of-order state file corruption.
+    this.saveChain = this.saveChain.then(runSave, runSave);
+    return this.saveChain;
   }
 
   getScopePaths(): string[] {
     return this.state.scopePaths;
+  }
+
+  getFunctionFilters(): FunctionFilters {
+    return this.state.functionFilters;
+  }
+
+  setFunctionFilters(filters: FunctionFilters): void {
+    const unique = <T extends string>(values: T[]): T[] => [...new Set(values)];
+    const statuses = unique(filters.statuses).filter(
+      (s) => s === "unread" || s === "read" || s === "reviewed"
+    );
+    const tags = unique(filters.tags).filter(
+      (t) => t === "entrypoint" || t === "important"
+    );
+
+    this.state.functionFilters = {
+      statuses: statuses.length > 0 ? statuses : [...DEFAULT_FUNCTION_FILTERS.statuses],
+      tags,
+    };
+  }
+
+  clearFunctionFilters(): void {
+    this.state.functionFilters = {
+      statuses: [...DEFAULT_FUNCTION_FILTERS.statuses],
+      tags: [],
+    };
   }
 
   addScopePath(filePath: string): void {
@@ -75,17 +284,36 @@ export class StateManager {
     }
   }
 
+  addExcludedPath(filePath: string): void {
+    if (!this.state.excludedPaths.includes(filePath)) {
+      this.state.excludedPaths.push(filePath);
+    }
+  }
+
+  removeExcludedPath(filePath: string): void {
+    this.state.excludedPaths = this.state.excludedPaths.filter((p) => p !== filePath);
+  }
+
+  isPathExcluded(filePath: string): boolean {
+    return this.state.excludedPaths.includes(filePath);
+  }
+
   removeScopePath(filePath: string): void {
     this.state.scopePaths = this.state.scopePaths.filter((p) => p !== filePath);
-    // Also remove any files that were under this scope path
+
+    // Drop tracked file entries that are no longer in scope after removal.
     for (const key of Object.keys(this.state.files)) {
-      if (key === filePath || key.startsWith(filePath + path.sep)) {
+      if (!this.isPathInScope(key)) {
         delete this.state.files[key];
       }
     }
   }
 
   isPathInScope(filePath: string): boolean {
+    if (this.isPathExcluded(filePath)) {
+      return false;
+    }
+
     return this.state.scopePaths.some(
       (scopePath) =>
         filePath === scopePath || filePath.startsWith(scopePath + path.sep)
@@ -100,8 +328,7 @@ export class StateManager {
     const existingFile = this.state.files[filePath];
 
     if (existingFile) {
-      // Preserve existing read counts and reviewed status
-      // Match by function NAME (stable) rather than ID (includes line number which changes)
+      // Preserve existing state when line numbers change by matching on name.
       const existingByName = new Map<string, FunctionState>();
       const existingById = new Map<string, FunctionState>();
       for (const fn of existingFile.functions) {
@@ -136,14 +363,12 @@ export class StateManager {
         filePath,
         relativePath,
         functions: mergedFunctions,
-        lastUpdated: Date.now(),
       };
     } else {
       this.state.files[filePath] = {
         filePath,
         relativePath,
         functions,
-        lastUpdated: Date.now(),
       };
     }
   }
@@ -158,14 +383,6 @@ export class StateManager {
 
   getAllFiles(): ScopedFile[] {
     return Object.values(this.state.files);
-  }
-
-  getAllFunctions(): FunctionState[] {
-    const functions: FunctionState[] = [];
-    for (const file of Object.values(this.state.files)) {
-      functions.push(...file.functions);
-    }
-    return functions;
   }
 
   setRead(functionId: string, read: boolean): void {
@@ -224,16 +441,13 @@ export class StateManager {
   }
 
   clearAllState(): void {
-    this.state = { ...DEFAULT_STATE };
+    this.state = createDefaultState();
   }
 
   // Progress tracking methods
 
   private getOrCreateTodayProgress(): DailyProgress {
     const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
-    if (!this.state.progressHistory) {
-      this.state.progressHistory = [];
-    }
     let entry = this.state.progressHistory.find((p) => p.date === today);
     if (!entry) {
       entry = {
@@ -247,13 +461,6 @@ export class StateManager {
         actions: [],
       };
       this.state.progressHistory.push(entry);
-    }
-    // Handle migration for existing entries
-    if (entry.linesRead === undefined) {
-      entry.linesRead = 0;
-    }
-    if (entry.linesReviewed === undefined) {
-      entry.linesReviewed = 0;
     }
     return entry;
   }
@@ -301,6 +508,6 @@ export class StateManager {
   }
 
   getProgressHistory(): DailyProgress[] {
-    return this.state.progressHistory || [];
+    return this.state.progressHistory;
   }
 }

@@ -17,12 +17,14 @@ export class ScopeManager {
   async addToScope(uri: vscode.Uri): Promise<string[]> {
     const filePath = uri.fsPath;
     this.stateManager.addScopePath(filePath);
+    this.stateManager.removeExcludedPath(filePath);
 
     // Expand to individual files and extract symbols
     const files = await this.expandToFiles(filePath);
-    await this.extractSymbolsForFiles(files);
+    const filteredFiles = files.filter((f) => !this.stateManager.isPathExcluded(f));
+    await this.extractSymbolsForFiles(filteredFiles);
 
-    return files;
+    return filteredFiles;
   }
 
   /**
@@ -45,7 +47,8 @@ export class ScopeManager {
     }
 
     // Remove duplicates
-    return [...new Set(allFiles)];
+    const uniqueFiles = [...new Set(allFiles)];
+    return uniqueFiles.filter((f) => !this.stateManager.isPathExcluded(f));
   }
 
   /**
@@ -108,7 +111,7 @@ export class ScopeManager {
       for (const [name, type] of entries) {
         const entryPath = path.join(dirPath, name);
 
-        // Skip hidden files and common non-code directories
+        // Skip hidden files/folders and node_modules
         if (name.startsWith(".") || name === "node_modules") {
           continue;
         }

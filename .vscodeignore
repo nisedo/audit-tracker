@@ -9,3 +9,4 @@ tsconfig.json
 eslint.config.mjs
 .eslintrc*
 icon.svg
+*.vsix

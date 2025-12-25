@@ -12,7 +12,7 @@ export interface FunctionState {
   startLine: number;
   /** Line number where function ends (0-indexed) */
   endLine: number;
-  /** Number of times the function has been read */
+  /** Whether the function has been marked as read (0/1) */
   readCount: number;
   /** Whether the function has been marked as fully reviewed */
   isReviewed: boolean;
@@ -22,9 +22,22 @@ export interface FunctionState {
   isImportant: boolean;
   /** Whether this function is hidden from the panel */
   isHidden: boolean;
-  /** Symbol kind from VSCode (Function, Method, etc.) */
-  symbolKind: number;
 }
+
+export type FunctionStatus = "unread" | "read" | "reviewed";
+export type FunctionTag = "entrypoint" | "important";
+
+export interface FunctionFilters {
+  /** Function status filters (unread/read/reviewed) */
+  statuses: FunctionStatus[];
+  /** Function tag filters (entrypoint/important) */
+  tags: FunctionTag[];
+}
+
+export const DEFAULT_FUNCTION_FILTERS: FunctionFilters = {
+  statuses: ["unread", "read", "reviewed"],
+  tags: [],
+};
 
 /**
  * Represents a file in scope with its functions
@@ -36,8 +49,6 @@ export interface ScopedFile {
   relativePath: string;
   /** Functions extracted from this file */
   functions: FunctionState[];
-  /** Last time symbols were extracted */
-  lastUpdated: number;
 }
 
 /**
@@ -84,6 +95,10 @@ export interface AuditTrackerState {
   version: number;
   /** List of paths (files/folders) marked as in-scope */
   scopePaths: string[];
+  /** List of explicit file paths excluded from scope */
+  excludedPaths: string[];
+  /** Tree view function filters */
+  functionFilters: FunctionFilters;
   /** Map of file path to its scoped data */
   files: Record<string, ScopedFile>;
   /** Daily progress history */
@@ -92,13 +107,19 @@ export interface AuditTrackerState {
   lastModified: number;
 }
 
-/**
- * Default empty state
- */
-export const DEFAULT_STATE: AuditTrackerState = {
-  version: 1,
-  scopePaths: [],
-  files: {},
-  progressHistory: [],
-  lastModified: Date.now(),
-};
+export const STATE_VERSION = 1;
+
+export function createDefaultState(): AuditTrackerState {
+  return {
+    version: STATE_VERSION,
+    scopePaths: [],
+    excludedPaths: [],
+    functionFilters: {
+      statuses: [...DEFAULT_FUNCTION_FILTERS.statuses],
+      tags: [],
+    },
+    files: {},
+    progressHistory: [],
+    lastModified: Date.now(),
+  };
+}
