@@ -63,6 +63,14 @@ Right-click any function and select **Mark as Entrypoint** to highlight critical
 - Arrow prefix (`→`)
 - "entrypoint" label in the description
 
+### Marking Important Functions
+
+Right-click any function and select **Mark as Important** to highlight high-priority functions that need extra attention. Important functions display with:
+- Exclamation prefix (`❗`)
+- "important" label in the description
+
+Functions can be both entrypoints and important: `→ ❗ transfer()`
+
 ### Progress Tracking
 
 AuditTracker automatically tracks your daily audit activity. Use **AuditTracker: Show Progress Report** to generate a markdown report showing:
@@ -77,7 +85,7 @@ The report is saved to `.vscode/{repo-name}-audit-progress.md` and opens automat
 
 Each function shows:
 - Status icon (○ unread, 👁 read, ✓ reviewed)
-- Function name (with → prefix for entrypoints)
+- Function name (with → prefix for entrypoints, ❗ prefix for important)
 - Line count
 
 Each file shows:

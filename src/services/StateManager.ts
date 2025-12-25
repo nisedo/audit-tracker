@@ -125,6 +125,7 @@ export class StateManager {
             readCount: existing.readCount,
             isReviewed: existing.isReviewed,
             isEntrypoint: existing.isEntrypoint,
+            isImportant: existing.isImportant,
             isHidden: existing.isHidden,
           };
         }
@@ -194,6 +195,17 @@ export class StateManager {
       for (const fn of file.functions) {
         if (fn.id === functionId) {
           fn.isEntrypoint = isEntrypoint;
+          return;
+        }
+      }
+    }
+  }
+
+  setImportant(functionId: string, isImportant: boolean): void {
+    for (const file of Object.values(this.state.files)) {
+      for (const fn of file.functions) {
+        if (fn.id === functionId) {
+          fn.isImportant = isImportant;
           return;
         }
       }

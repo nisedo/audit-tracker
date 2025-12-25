@@ -38,31 +38,39 @@ export class FunctionTreeItem extends vscode.TreeItem {
       baseName = baseName.substring(baseName.indexOf(".") + 1);
     }
 
-    // Add arrow marker for entrypoints
-    const displayName = functionState.isEntrypoint
-      ? `→ ${baseName}`
-      : baseName;
+    // Build display name with markers: → for entrypoint, ❗ for important
+    let displayName = baseName;
+    if (functionState.isImportant) {
+      displayName = `❗ ${displayName}`;
+    }
+    if (functionState.isEntrypoint) {
+      displayName = `→ ${displayName}`;
+    }
     super(displayName, vscode.TreeItemCollapsibleState.None);
 
     // Determine status: unread, read, or reviewed
     const isRead = functionState.readCount > 0;
     const isReviewed = functionState.isReviewed;
     const isEntrypoint = functionState.isEntrypoint;
+    const isImportant = functionState.isImportant;
 
-    // Set description (line count, entrypoint indicator)
+    // Set description (line count, entrypoint/important indicators)
     const lineCount = functionState.endLine - functionState.startLine + 1;
-    this.description = isEntrypoint
-      ? `entrypoint · ${lineCount} lines`
-      : `${lineCount} lines`;
+    const labels: string[] = [];
+    if (isEntrypoint) labels.push("entrypoint");
+    if (isImportant) labels.push("important");
+    labels.push(`${lineCount} lines`);
+    this.description = labels.join(" · ");
 
-    // Set context value for menu visibility (includes entrypoint state)
+    // Set context value for menu visibility (includes entrypoint and important state)
     const entrypointSuffix = isEntrypoint ? "Entrypoint" : "";
+    const importantSuffix = isImportant ? "Important" : "";
     if (isReviewed) {
-      this.contextValue = `functionReviewed${entrypointSuffix}`;
+      this.contextValue = `functionReviewed${entrypointSuffix}${importantSuffix}`;
     } else if (isRead) {
-      this.contextValue = `functionRead${entrypointSuffix}`;
+      this.contextValue = `functionRead${entrypointSuffix}${importantSuffix}`;
     } else {
-      this.contextValue = `functionUnread${entrypointSuffix}`;
+      this.contextValue = `functionUnread${entrypointSuffix}${importantSuffix}`;
     }
 
     // Icon based on status

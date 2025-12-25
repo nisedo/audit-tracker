@@ -100,6 +100,14 @@
         "title": "Unmark Entrypoint"
       },
       {
+        "command": "auditTracker.markImportant",
+        "title": "Mark as Important"
+      },
+      {
+        "command": "auditTracker.unmarkImportant",
+        "title": "Unmark Important"
+      },
+      {
         "command": "auditTracker.hideFunction",
         "title": "Hide Function"
       },
@@ -170,13 +178,23 @@
         },
         {
           "command": "auditTracker.markEntrypoint",
-          "when": "view == auditTracker.scopeView && viewItem =~ /^function(Unread|Read|Reviewed)$/",
+          "when": "view == auditTracker.scopeView && viewItem =~ /^function/ && viewItem =~ /^(?!.*Entrypoint)/",
           "group": "entrypoint@1"
         },
         {
           "command": "auditTracker.unmarkEntrypoint",
-          "when": "view == auditTracker.scopeView && viewItem =~ /Entrypoint$/",
+          "when": "view == auditTracker.scopeView && viewItem =~ /Entrypoint/",
           "group": "entrypoint@1"
+        },
+        {
+          "command": "auditTracker.markImportant",
+          "when": "view == auditTracker.scopeView && viewItem =~ /^function/ && viewItem =~ /^(?!.*Important)/",
+          "group": "important@1"
+        },
+        {
+          "command": "auditTracker.unmarkImportant",
+          "when": "view == auditTracker.scopeView && viewItem =~ /Important/",
+          "group": "important@1"
         },
         {
           "command": "auditTracker.hideFunction",

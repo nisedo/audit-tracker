@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Mark functions as "Important" (❗) for high-priority items that need extra auditor attention
+  - Right-click → "Mark as Important" / "Unmark Important"
+  - Visual indicator: ❗ prefix on function name
+  - Functions can be both entrypoints and important: `→ ❗ transfer()`
+
 ### Fixed
 
 - Function state (read/reviewed) no longer resets when code is edited and line numbers shift

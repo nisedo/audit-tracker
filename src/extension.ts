@@ -419,6 +419,34 @@ export async function activate(
       }
     ),
 
+    // Mark as important
+    vscode.commands.registerCommand(
+      "auditTracker.markImportant",
+      async (item: FunctionTreeItem) => {
+        if (!item?.functionState) {
+          return;
+        }
+
+        stateManager.setImportant(item.functionState.id, true);
+        await stateManager.save();
+        treeProvider.refresh();
+      }
+    ),
+
+    // Unmark important
+    vscode.commands.registerCommand(
+      "auditTracker.unmarkImportant",
+      async (item: FunctionTreeItem) => {
+        if (!item?.functionState) {
+          return;
+        }
+
+        stateManager.setImportant(item.functionState.id, false);
+        await stateManager.save();
+        treeProvider.refresh();
+      }
+    ),
+
     // Hide function
     vscode.commands.registerCommand(
       "auditTracker.hideFunction",

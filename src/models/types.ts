@@ -18,6 +18,8 @@ export interface FunctionState {
   isReviewed: boolean;
   /** Whether this function is marked as an entrypoint */
   isEntrypoint: boolean;
+  /** Whether this function is marked as important/high-priority */
+  isImportant: boolean;
   /** Whether this function is hidden from the panel */
   isHidden: boolean;
   /** Symbol kind from VSCode (Function, Method, etc.) */
