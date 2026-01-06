@@ -237,12 +237,12 @@
         {
           "command": "auditTracker.markAdmin",
           "when": "view == auditTracker.scopeView && viewItem =~ /^function/ && viewItem =~ /^(?!.*Admin)/",
-          "group": "admin@1"
+          "group": "entrypoint@2"
         },
         {
           "command": "auditTracker.unmarkAdmin",
           "when": "view == auditTracker.scopeView && viewItem =~ /Admin/",
-          "group": "admin@1"
+          "group": "entrypoint@2"
         },
         {
           "command": "auditTracker.hideFunction",
