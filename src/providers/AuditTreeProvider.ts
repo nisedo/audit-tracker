@@ -15,14 +15,15 @@ export class FileTreeItem extends vscode.TreeItem {
     this.contextValue = "file";
     this.iconPath = vscode.ThemeIcon.File;
 
-    // Show count of functions and reviewed status (excluding hidden)
+    // Show count of functions, read and reviewed status (excluding hidden)
     const visibleFunctions = scopedFile.functions.filter((f) => !f.isHidden);
     const total = visibleFunctions.length;
+    const read = visibleFunctions.filter((f) => f.readCount > 0).length;
     const reviewed = visibleFunctions.filter((f) => f.isReviewed).length;
     const hidden = scopedFile.functions.filter((f) => f.isHidden).length;
     this.description = hidden > 0
-      ? `${reviewed}/${total} reviewed (${hidden} hidden)`
-      : `${reviewed}/${total} reviewed`;
+      ? `${read}/${total} read · ${reviewed}/${total} reviewed (${hidden} hidden)`
+      : `${read}/${total} read · ${reviewed}/${total} reviewed`;
   }
 }
 
