@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Filter functions in the panel by status and tags (unread/read/reviewed/entrypoint/admin)
 - Admin function marking (🔐) for admin/privileged functions that need security-focused review
 - Auto-discover source folder (`contracts/`, `src/`, `lib/`, `sources/`) when no SCOPE file exists
+- Exclude `interfaces/` folders from scope (tracking interface functions isn't useful)
 
 ### Changed
 

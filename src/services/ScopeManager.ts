@@ -111,8 +111,8 @@ export class ScopeManager {
       for (const [name, type] of entries) {
         const entryPath = path.join(dirPath, name);
 
-        // Skip hidden files/folders and node_modules
-        if (name.startsWith(".") || name === "node_modules") {
+        // Skip hidden files/folders, node_modules, and interfaces
+        if (name.startsWith(".") || name === "node_modules" || name === "interfaces") {
           continue;
         }
 
