@@ -1,13 +1,13 @@
 {
-  "name": "audit-tracker",
-  "displayName": "AuditTracker",
+  "name": "auditracker",
+  "displayName": "Auditracker",
   "description": "Track code audit progress by marking files in scope and tracking function review status",
   "version": "0.4.0",
   "publisher": "nisedo",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nisedo/audit-tracker"
+    "url": "https://github.com/nisedo/auditracker"
   },
   "icon": "icon.png",
   "engines": {
@@ -26,232 +26,232 @@
     "blockchain"
   ],
   "activationEvents": [
-    "onView:auditTracker.scopeView",
-    "onCommand:auditTracker.addToScope",
-    "onCommand:auditTracker.removeFromScope",
-    "onCommand:auditTracker.markRead",
-    "onCommand:auditTracker.unmarkRead",
-    "onCommand:auditTracker.markReviewed",
-    "onCommand:auditTracker.unmarkReviewed",
-    "onCommand:auditTracker.filterFunctions",
-    "onCommand:auditTracker.clearFunctionFilter",
-    "onCommand:auditTracker.refresh",
-    "onCommand:auditTracker.goToFunction",
-    "onCommand:auditTracker.clearAllState",
-    "onCommand:auditTracker.loadScopeFile",
-    "onCommand:auditTracker.markEntrypoint",
-    "onCommand:auditTracker.unmarkEntrypoint",
-    "onCommand:auditTracker.markAdmin",
-    "onCommand:auditTracker.unmarkAdmin",
-    "onCommand:auditTracker.hideFunction",
-    "onCommand:auditTracker.showHiddenFunctions",
-    "onCommand:auditTracker.showProgressReport",
+    "onView:auditracker.scopeView",
+    "onCommand:auditracker.addToScope",
+    "onCommand:auditracker.removeFromScope",
+    "onCommand:auditracker.markRead",
+    "onCommand:auditracker.unmarkRead",
+    "onCommand:auditracker.markReviewed",
+    "onCommand:auditracker.unmarkReviewed",
+    "onCommand:auditracker.filterFunctions",
+    "onCommand:auditracker.clearFunctionFilter",
+    "onCommand:auditracker.refresh",
+    "onCommand:auditracker.goToFunction",
+    "onCommand:auditracker.clearAllState",
+    "onCommand:auditracker.loadScopeFile",
+    "onCommand:auditracker.markEntrypoint",
+    "onCommand:auditracker.unmarkEntrypoint",
+    "onCommand:auditracker.markAdmin",
+    "onCommand:auditracker.unmarkAdmin",
+    "onCommand:auditracker.hideFunction",
+    "onCommand:auditracker.showHiddenFunctions",
+    "onCommand:auditracker.showProgressReport",
     "workspaceContains:SCOPE.txt",
     "workspaceContains:SCOPE.md",
-    "workspaceContains:.vscode/*-audit-tracker.json"
+    "workspaceContains:.vscode/*-auditracker.json"
   ],
   "main": "./out/extension.js",
   "capabilities": {
     "untrustedWorkspaces": {
       "supported": false,
-      "description": "AuditTracker requires a trusted workspace because it reads and writes tracking data under the workspace’s .vscode directory."
+      "description": "Auditracker requires a trusted workspace because it reads and writes tracking data under the workspace’s .vscode directory."
     }
   },
   "contributes": {
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "audit-tracker",
-          "title": "AuditTracker",
+          "id": "auditracker",
+          "title": "Auditracker",
           "icon": "$(checklist)"
         }
       ]
     },
     "views": {
-      "audit-tracker": [
+      "auditracker": [
         {
-          "id": "auditTracker.scopeView",
+          "id": "auditracker.scopeView",
           "name": "Functions"
         }
       ]
     },
     "commands": [
       {
-        "command": "auditTracker.addToScope",
-        "title": "AuditTracker: Add to Scope"
+        "command": "auditracker.addToScope",
+        "title": "Auditracker: Add to Scope"
       },
       {
-        "command": "auditTracker.removeFromScope",
-        "title": "AuditTracker: Remove from Scope"
+        "command": "auditracker.removeFromScope",
+        "title": "Auditracker: Remove from Scope"
       },
       {
-        "command": "auditTracker.markRead",
+        "command": "auditracker.markRead",
         "title": "Mark as Read",
         "icon": "$(eye)"
       },
       {
-        "command": "auditTracker.unmarkRead",
+        "command": "auditracker.unmarkRead",
         "title": "Mark as Unread"
       },
       {
-        "command": "auditTracker.markReviewed",
+        "command": "auditracker.markReviewed",
         "title": "Mark as Reviewed",
         "icon": "$(check)"
       },
       {
-        "command": "auditTracker.unmarkReviewed",
+        "command": "auditracker.unmarkReviewed",
         "title": "Unmark Reviewed"
       },
       {
-        "command": "auditTracker.refresh",
+        "command": "auditracker.refresh",
         "title": "Refresh",
         "icon": "$(refresh)"
       },
       {
-        "command": "auditTracker.goToFunction",
+        "command": "auditracker.goToFunction",
         "title": "Go to Function"
       },
       {
-        "command": "auditTracker.clearAllState",
-        "title": "AuditTracker: Clear All Tracking State"
+        "command": "auditracker.clearAllState",
+        "title": "Auditracker: Clear All Tracking State"
       },
       {
-        "command": "auditTracker.loadScopeFile",
-        "title": "AuditTracker: Load Scope File"
+        "command": "auditracker.loadScopeFile",
+        "title": "Auditracker: Load Scope File"
       },
       {
-        "command": "auditTracker.markEntrypoint",
+        "command": "auditracker.markEntrypoint",
         "title": "Mark as Entrypoint"
       },
       {
-        "command": "auditTracker.unmarkEntrypoint",
+        "command": "auditracker.unmarkEntrypoint",
         "title": "Unmark Entrypoint"
       },
       {
-        "command": "auditTracker.markAdmin",
+        "command": "auditracker.markAdmin",
         "title": "Mark as Admin"
       },
       {
-        "command": "auditTracker.unmarkAdmin",
+        "command": "auditracker.unmarkAdmin",
         "title": "Unmark Admin"
       },
       {
-        "command": "auditTracker.hideFunction",
+        "command": "auditracker.hideFunction",
         "title": "Hide Function"
       },
       {
-        "command": "auditTracker.showHiddenFunctions",
+        "command": "auditracker.showHiddenFunctions",
         "title": "Show Hidden Functions"
       },
       {
-        "command": "auditTracker.showProgressReport",
-        "title": "AuditTracker: Show Progress Report"
+        "command": "auditracker.showProgressReport",
+        "title": "Auditracker: Show Progress Report"
       },
       {
-        "command": "auditTracker.filterFunctions",
-        "title": "AuditTracker: Filter Functions",
+        "command": "auditracker.filterFunctions",
+        "title": "Auditracker: Filter Functions",
         "icon": "$(filter)"
       },
       {
-        "command": "auditTracker.clearFunctionFilter",
-        "title": "AuditTracker: Clear Function Filter",
+        "command": "auditracker.clearFunctionFilter",
+        "title": "Auditracker: Clear Function Filter",
         "icon": "$(clear-all)"
       }
     ],
     "menus": {
       "explorer/context": [
         {
-          "command": "auditTracker.addToScope",
+          "command": "auditracker.addToScope",
           "group": "audit@1",
           "when": "resourceScheme == file"
         },
         {
-          "command": "auditTracker.removeFromScope",
+          "command": "auditracker.removeFromScope",
           "group": "audit@2",
           "when": "resourceScheme == file"
         }
       ],
       "view/title": [
         {
-          "command": "auditTracker.filterFunctions",
-          "when": "view == auditTracker.scopeView",
+          "command": "auditracker.filterFunctions",
+          "when": "view == auditracker.scopeView",
           "group": "navigation@1"
         },
         {
-          "command": "auditTracker.clearFunctionFilter",
-          "when": "view == auditTracker.scopeView && auditTracker.filtersActive",
+          "command": "auditracker.clearFunctionFilter",
+          "when": "view == auditracker.scopeView && auditracker.filtersActive",
           "group": "navigation@2"
         },
         {
-          "command": "auditTracker.refresh",
-          "when": "view == auditTracker.scopeView",
+          "command": "auditracker.refresh",
+          "when": "view == auditracker.scopeView",
           "group": "navigation@3"
         }
       ],
       "view/item/context": [
         {
-          "command": "auditTracker.markRead",
-          "when": "view == auditTracker.scopeView && viewItem =~ /^functionUnread/",
+          "command": "auditracker.markRead",
+          "when": "view == auditracker.scopeView && viewItem =~ /^functionUnread/",
           "group": "inline@1"
         },
         {
-          "command": "auditTracker.markRead",
-          "when": "view == auditTracker.scopeView && viewItem =~ /^functionUnread/",
+          "command": "auditracker.markRead",
+          "when": "view == auditracker.scopeView && viewItem =~ /^functionUnread/",
           "group": "audit@1"
         },
         {
-          "command": "auditTracker.markReviewed",
-          "when": "view == auditTracker.scopeView && viewItem =~ /^functionRead/",
+          "command": "auditracker.markReviewed",
+          "when": "view == auditracker.scopeView && viewItem =~ /^functionRead/",
           "group": "inline@1"
         },
         {
-          "command": "auditTracker.unmarkRead",
-          "when": "view == auditTracker.scopeView && viewItem =~ /^functionRead/",
+          "command": "auditracker.unmarkRead",
+          "when": "view == auditracker.scopeView && viewItem =~ /^functionRead/",
           "group": "audit@1"
         },
         {
-          "command": "auditTracker.markReviewed",
-          "when": "view == auditTracker.scopeView && viewItem =~ /^functionRead/",
+          "command": "auditracker.markReviewed",
+          "when": "view == auditracker.scopeView && viewItem =~ /^functionRead/",
           "group": "audit@2"
         },
         {
-          "command": "auditTracker.unmarkReviewed",
-          "when": "view == auditTracker.scopeView && viewItem =~ /^functionReviewed/",
+          "command": "auditracker.unmarkReviewed",
+          "when": "view == auditracker.scopeView && viewItem =~ /^functionReviewed/",
           "group": "audit@1"
         },
         {
-          "command": "auditTracker.removeFromScope",
-          "when": "view == auditTracker.scopeView && viewItem == file",
+          "command": "auditracker.removeFromScope",
+          "when": "view == auditracker.scopeView && viewItem == file",
           "group": "audit@1"
         },
         {
-          "command": "auditTracker.markEntrypoint",
-          "when": "view == auditTracker.scopeView && viewItem =~ /^function/ && viewItem =~ /^(?!.*Entrypoint)/",
+          "command": "auditracker.markEntrypoint",
+          "when": "view == auditracker.scopeView && viewItem =~ /^function/ && viewItem =~ /^(?!.*Entrypoint)/",
           "group": "entrypoint@1"
         },
         {
-          "command": "auditTracker.unmarkEntrypoint",
-          "when": "view == auditTracker.scopeView && viewItem =~ /Entrypoint/",
+          "command": "auditracker.unmarkEntrypoint",
+          "when": "view == auditracker.scopeView && viewItem =~ /Entrypoint/",
           "group": "entrypoint@1"
         },
         {
-          "command": "auditTracker.markAdmin",
-          "when": "view == auditTracker.scopeView && viewItem =~ /^function/ && viewItem =~ /^(?!.*Admin)/",
+          "command": "auditracker.markAdmin",
+          "when": "view == auditracker.scopeView && viewItem =~ /^function/ && viewItem =~ /^(?!.*Admin)/",
           "group": "entrypoint@2"
         },
         {
-          "command": "auditTracker.unmarkAdmin",
-          "when": "view == auditTracker.scopeView && viewItem =~ /Admin/",
+          "command": "auditracker.unmarkAdmin",
+          "when": "view == auditracker.scopeView && viewItem =~ /Admin/",
           "group": "entrypoint@2"
         },
         {
-          "command": "auditTracker.hideFunction",
-          "when": "view == auditTracker.scopeView && viewItem =~ /^function/",
+          "command": "auditracker.hideFunction",
+          "when": "view == auditracker.scopeView && viewItem =~ /^function/",
           "group": "visibility@1"
         },
         {
-          "command": "auditTracker.showHiddenFunctions",
-          "when": "view == auditTracker.scopeView && viewItem == file",
+          "command": "auditracker.showHiddenFunctions",
+          "when": "view == auditracker.scopeView && viewItem == file",
           "group": "visibility@1"
         }
       ]

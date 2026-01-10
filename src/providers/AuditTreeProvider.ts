@@ -90,7 +90,7 @@ export class FunctionTreeItem extends vscode.TreeItem {
 
     // Command to navigate to function
     this.command = {
-      command: "auditTracker.goToFunction",
+      command: "auditracker.goToFunction",
       title: "Go to Function",
       arguments: [functionState],
     };

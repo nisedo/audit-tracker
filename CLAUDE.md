@@ -23,7 +23,7 @@ npm run lint         # Run ESLint
 ## Package and Install
 
 ```bash
-npm run compile && npx vsce package --allow-missing-repository && code --install-extension audit-tracker-*.vsix --force
+npm run compile && npx vsce package --allow-missing-repository && code --install-extension auditracker-*.vsix --force
 ```
 
 ## Architecture
@@ -32,7 +32,7 @@ This is a VSCode extension for tracking code audit progress. The codebase follow
 
 ## Workspace Support
 
-AuditTracker intentionally supports **single-folder, local file system workspaces only**.
+Auditracker intentionally supports **single-folder, local file system workspaces only**.
 
 - If no folder is open, the extension disables itself.
 - If VSCode is opened with a multi-root workspace, the extension warns and disables itself to avoid ambiguous state storage and relative paths.
@@ -41,7 +41,7 @@ AuditTracker intentionally supports **single-folder, local file system workspace
 - `src/extension.ts` - Activates extension, registers all commands, tree views, and providers. Contains command implementations inline.
 
 ### Services Layer (`src/services/`)
-- **StateManager** - Persists state to `.vscode/{repo-name}-audit-tracker.json`. Manages scope paths, `excludedPaths`, `functionFilters`, scoped files with functions, and progress history. All state mutations go through this class.
+- **StateManager** - Persists state to `.vscode/{repo-name}-auditracker.json`. Manages scope paths, `excludedPaths`, `functionFilters`, scoped files with functions, and progress history. All state mutations go through this class.
 - **StateManager** also tracks `excludedPaths` for files explicitly removed from scope (useful when a folder is in scope but a specific file should be skipped).
 - **ScopeManager** - Orchestrates adding/removing files from scope. Expands folders to files, delegates to SymbolExtractor, updates StateManager.
 - **SymbolExtractor** - Uses VSCode's `DocumentSymbolProvider` API to extract functions/methods from files.
@@ -51,7 +51,7 @@ AuditTracker intentionally supports **single-folder, local file system workspace
 - **ScopeDecorationProvider** - `FileDecorationProvider` that adds 📌 badge to in-scope files in the Explorer.
 
 ### Models (`src/models/types.ts`)
-TypeScript interfaces for all data structures: `FunctionState`, `ScopedFile`, `DailyProgress`, `AuditTrackerState`.
+TypeScript interfaces for all data structures: `FunctionState`, `ScopedFile`, `DailyProgress`, `AuditrackerState`.
 
 Key `FunctionState` fields: `id`, `name`, `filePath`, `startLine`, `endLine`, `readCount`, `isReviewed`, `isEntrypoint`, `isAdmin`, `isHidden`.
 
@@ -64,6 +64,6 @@ Key `FunctionState` fields: `id`, `name`, `filePath`, `startLine`, `endLine`, `r
 6. Decoration providers query `StateManager` to determine badges
 
 ### Key Files
-- State: `.vscode/{repo-name}-audit-tracker.json`
+- State: `.vscode/{repo-name}-auditracker.json`
 - Progress report: `.vscode/{repo-name}-audit-progress.md`
 - Scope definition: `SCOPE.txt` or `SCOPE.md` at workspace root (optional, auto-loaded)

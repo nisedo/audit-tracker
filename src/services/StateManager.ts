@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import {
-  AuditTrackerState,
+  AudiotrackerState,
   DailyProgress,
   DEFAULT_FUNCTION_FILTERS,
   FunctionState,
@@ -14,7 +14,7 @@ import {
 } from "../models/types";
 
 export class StateManager {
-  private state: AuditTrackerState;
+  private state: AudiotrackerState;
   private stateFilePath: vscode.Uri | undefined;
   private saveChain: Promise<void> = Promise.resolve();
 
@@ -22,7 +22,7 @@ export class StateManager {
     this.state = createDefaultState();
     if (workspaceRoot) {
       const repoName = path.basename(workspaceRoot);
-      const stateFileName = `${repoName}-audit-tracker.json`;
+      const stateFileName = `${repoName}-auditracker.json`;
       this.stateFilePath = vscode.Uri.file(
         path.join(workspaceRoot, ".vscode", stateFileName)
       );
@@ -36,7 +36,7 @@ export class StateManager {
 
     try {
       const content = await vscode.workspace.fs.readFile(this.stateFilePath);
-      const parsed = JSON.parse(content.toString()) as AuditTrackerState;
+      const parsed = JSON.parse(content.toString()) as AudiotrackerState;
 
       // Merge with defaults + normalize to handle schema evolution.
       this.state = this.normalizeState({
@@ -49,7 +49,7 @@ export class StateManager {
     }
   }
 
-  private normalizeState(state: AuditTrackerState): AuditTrackerState {
+  private normalizeState(state: AudiotrackerState): AudiotrackerState {
     const unique = (values: string[]): string[] => [...new Set(values)];
     const isFunctionStatus = (value: string): value is FunctionStatus =>
       value === "unread" || value === "read" || value === "reviewed";

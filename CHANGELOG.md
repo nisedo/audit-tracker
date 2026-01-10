@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Renamed extension from "AuditTracker" / "audit-tracker" to "Auditracker" / "auditracker"
+- State file renamed from `{repo-name}-audit-tracker.json` to `{repo-name}-auditracker.json`
 - Replaced "Important" feature with "Admin" feature (more specific to security auditing use case)
 - Entrypoint indicator changed from arrow (`→`) to exclamation (`❗️`) for better visibility
 - Functions can now be marked as both entrypoint and admin: `❗️ 🔐 onlyOwner()`
@@ -42,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Function state (read/reviewed) no longer resets when code is edited and line numbers shift
   - Now matches functions by name (stable) instead of only by ID (includes line number)
   - Preserves user's review progress even when file is modified
-- Removing a file from AuditTracker now fully removes it from scope (even if it was included via a folder scope)
+- Removing a file from Auditracker now fully removes it from scope (even if it was included via a folder scope)
 - Hidden functions no longer count toward progress metrics (panel + progress report)
 - Prevented rare state loss by serializing concurrent writes to the workspace state JSON file
 - Progress history is normalized on load to handle older state files
@@ -70,7 +72,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Daily progress tracking (automatic, always-on)
-- Progress report generation command (`AuditTracker: Show Progress Report`)
+- Progress report generation command (`Auditracker: Show Progress Report`)
 - Overall progress summary with read/reviewed counts and percentages
 - Daily activity summary table with function counts and **line counts** (LOC read/reviewed per day)
 - Detailed activity log showing exactly which functions were read/reviewed
@@ -98,5 +100,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Manual "Load Scope File" command to reload scope anytime
 - Function navigation with temporary highlight effect
 - Line count display for each function
-- Per-workspace state persistence in `.vscode/{repo-name}-audit-tracker.json`
+- Per-workspace state persistence in `.vscode/{repo-name}-auditracker.json`
 - File watcher for automatic symbol refresh on file changes

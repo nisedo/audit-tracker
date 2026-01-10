@@ -2,6 +2,8 @@ out/
 node_modules/
 .vscode-test/
 *.vsix
-.vscode/*-audit-tracker.json
+.vscode/*-auditracker.json
 .vscode/*-audit-progress.md
 .DS_Store
+.claude/
+.vscode/

@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="icon.png" alt="AuditTracker Logo" width="128" height="128">
+  <img src="icon.png" alt="Auditracker Logo" width="128" height="128">
 </p>
 
-# AuditTracker
+# Auditracker
 
 A VSCode extension for tracking code audit progress. Mark files as in-scope, track function review status, and identify entrypoints.
 
@@ -19,15 +19,15 @@ A VSCode extension for tracking code audit progress. Mark files as in-scope, tra
 - **SCOPE File Support**: Auto-load scope from `SCOPE.txt` or `SCOPE.md` at workspace root
 - **Navigation**: Click any function to jump to it with temporary highlighting
 - **Progress Tracking**: Automatic daily progress tracking with detailed markdown reports
-- **Persistence**: State is saved per-workspace in `.vscode/{repo-name}-audit-tracker.json`
+- **Persistence**: State is saved per-workspace in `.vscode/{repo-name}-auditracker.json`
 
 ## Usage
 
 ### Adding Files to Scope
 
-**Auto-Discovery**: When you first open a workspace, AuditTracker automatically scans for common source folders (`contracts/`, `src/`, `lib/`, `sources/`) and loads the first one found. No manual setup needed for most projects.
+**Auto-Discovery**: When you first open a workspace, Auditracker automatically scans for common source folders (`contracts/`, `src/`, `lib/`, `sources/`) and loads the first one found. No manual setup needed for most projects.
 
-**Manual**: Right-click a file or folder in the Explorer and select **AuditTracker: Add to Scope**.
+**Manual**: Right-click a file or folder in the Explorer and select **Auditracker: Add to Scope**.
 
 **SCOPE File**: Create a `SCOPE.txt` or `SCOPE.md` file at your workspace root with one path per line:
 
@@ -37,13 +37,13 @@ src/contracts/Vault.sol
 lib/utils/
 ```
 
-The scope file is auto-loaded when no existing config is found. Use the **AuditTracker: Load Scope File** command to manually reload it.
+The scope file is auto-loaded when no existing config is found. Use the **Auditracker: Load Scope File** command to manually reload it.
 
 ### Removing from Scope
 
-Use **AuditTracker: Remove from Scope** on a file or folder.
+Use **Auditracker: Remove from Scope** on a file or folder.
 
-If a folder is in scope and you remove a single file, AuditTracker remembers that file as **excluded**. To include it again, run **AuditTracker: Add to Scope** on that file.
+If a folder is in scope and you remove a single file, Auditracker remembers that file as **excluded**. To include it again, run **Auditracker: Add to Scope** on that file.
 
 ### Tracking Progress
 
@@ -59,14 +59,14 @@ Functions display with three states:
 
 ### Filtering Functions
 
-Use **AuditTracker: Filter Functions** (or the filter icon in the panel title) to control which functions are shown.
+Use **Auditracker: Filter Functions** (or the filter icon in the panel title) to control which functions are shown.
 
 - Status filters: unread/read/reviewed (you can select any combination)
 - Tag filters: entrypoint/admin
 
 Filters are combined as: **(status matches) AND (tag matches)**. If you select multiple tags, a function matches if it has **any** selected tag.
 
-Use **AuditTracker: Clear Function Filter** to reset back to showing everything.
+Use **Auditracker: Clear Function Filter** to reset back to showing everything.
 
 ### Hiding Functions
 
@@ -93,7 +93,7 @@ Functions can be both entrypoints and admin: `❗️ 🔐 onlyOwner()`
 
 ### Progress Tracking
 
-AuditTracker automatically tracks your daily audit activity. Use **AuditTracker: Show Progress Report** to generate a markdown report showing:
+Auditracker automatically tracks your daily audit activity. Use **Auditracker: Show Progress Report** to generate a markdown report showing:
 
 - **Overall Progress**: Current status of functions and files (read/reviewed counts and percentages)
 - **Daily Activity Summary**: Table of daily counts for functions read/reviewed, lines of code read/reviewed, and files completed
@@ -116,17 +116,17 @@ Each file shows:
 
 | Command | Description |
 |---------|-------------|
-| `AuditTracker: Add to Scope` | Add file/folder to audit scope |
-| `AuditTracker: Remove from Scope` | Remove from scope |
+| `Auditracker: Add to Scope` | Add file/folder to audit scope |
+| `Auditracker: Remove from Scope` | Remove from scope |
 | `Mark as Read` | Mark function as read (inline/context menu) |
 | `Mark as Unread` | Mark function as unread (context menu) |
 | `Mark as Reviewed` | Mark function as reviewed (inline/context menu) |
 | `Unmark Reviewed` | Unmark reviewed (context menu) |
-| `AuditTracker: Filter Functions` | Filter which functions are shown in the panel |
-| `AuditTracker: Clear Function Filter` | Clear the function filter |
-| `AuditTracker: Load Scope File` | Load/reload scope from SCOPE.txt or SCOPE.md |
-| `AuditTracker: Clear All Tracking State` | Reset all tracking data |
-| `AuditTracker: Show Progress Report` | Generate and open daily progress report |
+| `Auditracker: Filter Functions` | Filter which functions are shown in the panel |
+| `Auditracker: Clear Function Filter` | Clear the function filter |
+| `Auditracker: Load Scope File` | Load/reload scope from SCOPE.txt or SCOPE.md |
+| `Auditracker: Clear All Tracking State` | Reset all tracking data |
+| `Auditracker: Show Progress Report` | Generate and open daily progress report |
 | `Mark as Entrypoint` | Mark function as an entrypoint (context menu) |
 | `Unmark Entrypoint` | Remove entrypoint marking (context menu) |
 | `Mark as Admin` | Mark function as admin/privileged (context menu) |
@@ -138,21 +138,21 @@ Each file shows:
 ## Requirements
 
 - VSCode 1.85.0 or higher
-- Trusted workspace (AuditTracker writes tracking files under `.vscode/`)
+- Trusted workspace (Auditracker writes tracking files under `.vscode/`)
 - Local file system workspace only (no remote/virtual workspaces)
 - Single-folder workspace only (multi-root workspaces are not supported)
 - Language server for your target language (for symbol extraction)
 
 ## Extension Settings
 
-This extension stores state in `.vscode/{repo-name}-audit-tracker.json` within your workspace, where `{repo-name}` is the name of your workspace folder.
+This extension stores state in `.vscode/{repo-name}-auditracker.json` within your workspace, where `{repo-name}` is the name of your workspace folder.
 
 Progress reports are generated at `.vscode/{repo-name}-audit-progress.md`.
 
 If you don’t want to commit these files, add them to your repo’s `.gitignore`:
 
 ```
-.vscode/*-audit-tracker.json
+.vscode/*-auditracker.json
 .vscode/*-audit-progress.md
 ```
 

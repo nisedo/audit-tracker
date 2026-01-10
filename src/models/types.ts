@@ -90,7 +90,7 @@ export interface DailyProgress {
 /**
  * Root state object persisted to JSON
  */
-export interface AuditTrackerState {
+export interface AudiotrackerState {
   /** Version for future migrations */
   version: number;
   /** List of paths (files/folders) marked as in-scope */
@@ -109,7 +109,7 @@ export interface AuditTrackerState {
 
 export const STATE_VERSION = 1;
 
-export function createDefaultState(): AuditTrackerState {
+export function createDefaultState(): AudiotrackerState {
   return {
     version: STATE_VERSION,
     scopePaths: [],

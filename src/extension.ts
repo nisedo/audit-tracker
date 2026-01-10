@@ -131,31 +131,31 @@ function generateProgressReport(
   return report;
 }
 
-const NO_WORKSPACE_MESSAGE = "AuditTracker requires an open folder workspace.";
+const NO_WORKSPACE_MESSAGE = "Auditracker requires an open folder workspace.";
 
 const MULTI_ROOT_UNSUPPORTED_MESSAGE =
-  "AuditTracker does not support multi-root workspaces. Open a single folder workspace to use this extension.";
+  "Auditracker does not support multi-root workspaces. Open a single folder workspace to use this extension.";
 
 const DISABLED_COMMANDS = [
-  "auditTracker.addToScope",
-  "auditTracker.removeFromScope",
-  "auditTracker.markRead",
-  "auditTracker.unmarkRead",
-  "auditTracker.markReviewed",
-  "auditTracker.unmarkReviewed",
-  "auditTracker.filterFunctions",
-  "auditTracker.clearFunctionFilter",
-  "auditTracker.refresh",
-  "auditTracker.goToFunction",
-  "auditTracker.clearAllState",
-  "auditTracker.loadScopeFile",
-  "auditTracker.markEntrypoint",
-  "auditTracker.unmarkEntrypoint",
-  "auditTracker.markAdmin",
-  "auditTracker.unmarkAdmin",
-  "auditTracker.hideFunction",
-  "auditTracker.showHiddenFunctions",
-  "auditTracker.showProgressReport",
+  "auditracker.addToScope",
+  "auditracker.removeFromScope",
+  "auditracker.markRead",
+  "auditracker.unmarkRead",
+  "auditracker.markReviewed",
+  "auditracker.unmarkReviewed",
+  "auditracker.filterFunctions",
+  "auditracker.clearFunctionFilter",
+  "auditracker.refresh",
+  "auditracker.goToFunction",
+  "auditracker.clearAllState",
+  "auditracker.loadScopeFile",
+  "auditracker.markEntrypoint",
+  "auditracker.unmarkEntrypoint",
+  "auditracker.markAdmin",
+  "auditracker.unmarkAdmin",
+  "auditracker.hideFunction",
+  "auditracker.showHiddenFunctions",
+  "auditracker.showProgressReport",
 ] as const;
 
 interface FilterPickItem extends vscode.QuickPickItem {
@@ -197,7 +197,7 @@ function registerDisabledMode(
   treeTitle: string,
   treeDescription: string
 ): void {
-  const treeView = vscode.window.createTreeView("auditTracker.scopeView", {
+  const treeView = vscode.window.createTreeView("auditracker.scopeView", {
     treeDataProvider: new DisabledTreeProvider(treeTitle, treeDescription, message),
     showCollapseAll: false,
   });
@@ -254,7 +254,7 @@ function formatFilterMessage(filters: FunctionFilters): string | undefined {
 function updateFilterUi(filters: FunctionFilters): void {
   void vscode.commands.executeCommand(
     "setContext",
-    "auditTracker.filtersActive",
+    "auditracker.filtersActive",
     isFilterActive(filters)
   );
 
@@ -383,7 +383,7 @@ export async function activate(
     registerDisabledMode(
       context,
       NO_WORKSPACE_MESSAGE,
-      "Open a folder to use AuditTracker",
+      "Open a folder to use Auditracker",
       "No workspace folder open"
     );
     return;
@@ -440,7 +440,7 @@ export async function activate(
   }
 
   // Register tree view
-  const auditTreeView = vscode.window.createTreeView("auditTracker.scopeView", {
+  const auditTreeView = vscode.window.createTreeView("auditracker.scopeView", {
     treeDataProvider: treeProvider,
     showCollapseAll: true,
   });
@@ -451,7 +451,7 @@ export async function activate(
   context.subscriptions.push(
     // Add to scope
     vscode.commands.registerCommand(
-      "auditTracker.addToScope",
+      "auditracker.addToScope",
       async (uri?: vscode.Uri) => {
         // Use active editor's file if no URI provided (e.g., from command palette)
         if (!uri) {
@@ -490,7 +490,7 @@ export async function activate(
 
     // Remove from scope (from explorer context menu)
     vscode.commands.registerCommand(
-      "auditTracker.removeFromScope",
+      "auditracker.removeFromScope",
       async (uriOrItem: vscode.Uri | FileTreeItem) => {
         let uri: vscode.Uri;
         let decorationUris: vscode.Uri[] = [];
@@ -565,7 +565,7 @@ export async function activate(
 
     // Mark as read
     vscode.commands.registerCommand(
-      "auditTracker.markRead",
+      "auditracker.markRead",
       async (item: FunctionTreeItem) => {
         if (!item?.functionState) {
           return;
@@ -602,7 +602,7 @@ export async function activate(
 
     // Unmark read
     vscode.commands.registerCommand(
-      "auditTracker.unmarkRead",
+      "auditracker.unmarkRead",
       async (item: FunctionTreeItem) => {
         if (!item?.functionState) {
           return;
@@ -616,7 +616,7 @@ export async function activate(
 
     // Mark as reviewed
     vscode.commands.registerCommand(
-      "auditTracker.markReviewed",
+      "auditracker.markReviewed",
       async (item: FunctionTreeItem) => {
         if (!item?.functionState) {
           return;
@@ -660,7 +660,7 @@ export async function activate(
 
     // Unmark reviewed
     vscode.commands.registerCommand(
-      "auditTracker.unmarkReviewed",
+      "auditracker.unmarkReviewed",
       async (item: FunctionTreeItem) => {
         if (!item?.functionState) {
           return;
@@ -674,7 +674,7 @@ export async function activate(
 
     // Mark as entrypoint
     vscode.commands.registerCommand(
-      "auditTracker.markEntrypoint",
+      "auditracker.markEntrypoint",
       async (item: FunctionTreeItem) => {
         if (!item?.functionState) {
           return;
@@ -688,7 +688,7 @@ export async function activate(
 
     // Unmark entrypoint
     vscode.commands.registerCommand(
-      "auditTracker.unmarkEntrypoint",
+      "auditracker.unmarkEntrypoint",
       async (item: FunctionTreeItem) => {
         if (!item?.functionState) {
           return;
@@ -702,7 +702,7 @@ export async function activate(
 
     // Mark as admin
     vscode.commands.registerCommand(
-      "auditTracker.markAdmin",
+      "auditracker.markAdmin",
       async (item: FunctionTreeItem) => {
         if (!item?.functionState) {
           return;
@@ -716,7 +716,7 @@ export async function activate(
 
     // Unmark admin
     vscode.commands.registerCommand(
-      "auditTracker.unmarkAdmin",
+      "auditracker.unmarkAdmin",
       async (item: FunctionTreeItem) => {
         if (!item?.functionState) {
           return;
@@ -730,7 +730,7 @@ export async function activate(
 
     // Hide function
     vscode.commands.registerCommand(
-      "auditTracker.hideFunction",
+      "auditracker.hideFunction",
       async (item: FunctionTreeItem) => {
         if (!item?.functionState) {
           return;
@@ -744,7 +744,7 @@ export async function activate(
 
     // Show hidden functions (unhide all in file)
     vscode.commands.registerCommand(
-      "auditTracker.showHiddenFunctions",
+      "auditracker.showHiddenFunctions",
       async (item: FileTreeItem) => {
         if (!item?.scopedFile) {
           return;
@@ -761,14 +761,14 @@ export async function activate(
     ),
 
     // Refresh view
-    vscode.commands.registerCommand("auditTracker.refresh", async () => {
+    vscode.commands.registerCommand("auditracker.refresh", async () => {
       await scopeManager.refreshAllSymbols();
       await stateManager.save();
       treeProvider.refresh();
     }),
 
     // Filter functions shown in the panel
-    vscode.commands.registerCommand("auditTracker.filterFunctions", async () => {
+    vscode.commands.registerCommand("auditracker.filterFunctions", async () => {
       const currentFilters = stateManager.getFunctionFilters();
 
       const picks: FilterPickItem[] = [
@@ -808,7 +808,7 @@ export async function activate(
 
       const selected = await vscode.window.showQuickPick(picks, {
         canPickMany: true,
-        title: "AuditTracker: Filter Functions",
+        title: "Auditracker: Filter Functions",
         placeHolder: "Select which functions to show in the panel",
         ignoreFocusOut: true,
       });
@@ -836,7 +836,7 @@ export async function activate(
 
     // Clear function filters
     vscode.commands.registerCommand(
-      "auditTracker.clearFunctionFilter",
+      "auditracker.clearFunctionFilter",
       async () => {
         stateManager.clearFunctionFilters();
         await stateManager.save();
@@ -846,7 +846,7 @@ export async function activate(
     ),
 
     // Load scope from SCOPE.txt or SCOPE.md file
-    vscode.commands.registerCommand("auditTracker.loadScopeFile", async () => {
+    vscode.commands.registerCommand("auditracker.loadScopeFile", async () => {
       const addedFiles = await loadScopeFile(
         workspaceRoot,
         scopeManager,
@@ -867,7 +867,7 @@ export async function activate(
 
     // Go to function
     vscode.commands.registerCommand(
-      "auditTracker.goToFunction",
+      "auditracker.goToFunction",
       async (func: FunctionState) => {
         if (!func) {
           return;
@@ -903,7 +903,7 @@ export async function activate(
     ),
 
     // Clear all state
-    vscode.commands.registerCommand("auditTracker.clearAllState", async () => {
+    vscode.commands.registerCommand("auditracker.clearAllState", async () => {
       // Get all files before clearing to refresh their decorations
       const allFiles = stateManager
         .getAllFiles()
@@ -921,13 +921,13 @@ export async function activate(
         updateFilterUi(stateManager.getFunctionFilters());
         treeProvider.refresh();
         decorationProvider.refresh(allFiles);
-        vscode.window.showInformationMessage("AuditTracker state cleared");
+        vscode.window.showInformationMessage("Auditracker state cleared");
       }
     }),
 
     // Show progress report
     vscode.commands.registerCommand(
-      "auditTracker.showProgressReport",
+      "auditracker.showProgressReport",
       async () => {
         if (!workspaceRoot) {
           vscode.window.showErrorMessage("No workspace folder open");
