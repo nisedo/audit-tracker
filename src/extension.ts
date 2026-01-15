@@ -884,7 +884,7 @@ export async function activate(
           vscode.TextEditorRevealType.InCenter
         );
 
-        // Temporarily highlight the function
+        // Highlight the function until user clicks elsewhere
         const highlightDecoration =
           vscode.window.createTextEditorDecorationType({
             backgroundColor: new vscode.ThemeColor(
@@ -895,10 +895,17 @@ export async function activate(
         const range = new vscode.Range(func.startLine, 0, func.endLine, 0);
         editor.setDecorations(highlightDecoration, [range]);
 
-        // Remove highlight after 500ms
-        setTimeout(() => {
-          highlightDecoration.dispose();
-        }, 500);
+        // Remove highlight when user changes selection or switches editor
+        const disposable = vscode.Disposable.from(
+          vscode.window.onDidChangeTextEditorSelection(() => {
+            highlightDecoration.dispose();
+            disposable.dispose();
+          }),
+          vscode.window.onDidChangeActiveTextEditor(() => {
+            highlightDecoration.dispose();
+            disposable.dispose();
+          })
+        );
       }
     ),
 

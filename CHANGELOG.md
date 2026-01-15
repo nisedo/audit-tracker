@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Function highlight now persists until user clicks elsewhere (instead of 500ms timeout)
+- File description now shows both read and reviewed counts (e.g., "12/23 read · 1/23 reviewed")
 - Renamed extension from "AuditTracker" / "audit-tracker" to "Auditracker" / "auditracker"
 - State file renamed from `{repo-name}-audit-tracker.json` to `{repo-name}-auditracker.json`
 - Replaced "Important" feature with "Admin" feature (more specific to security auditing use case)

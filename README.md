@@ -23,7 +23,7 @@ git clone https://github.com/nisedo/auditracker.git && cd auditracker && npm ins
 - **Admin Functions**: Mark admin/privileged functions for security-focused review (🔐)
 - **Auto-Discovery**: Automatically loads `contracts/`, `src/`, `lib/`, or `sources/` folder when no scope is defined
 - **SCOPE File Support**: Auto-load scope from `SCOPE.txt` or `SCOPE.md` at workspace root
-- **Navigation**: Click any function to jump to it with temporary highlighting
+- **Navigation**: Click any function to jump to it with persistent highlighting (until you click elsewhere)
 - **Progress Tracking**: Automatic daily progress tracking with detailed markdown reports
 - **Persistence**: State is saved per-workspace in `.vscode/{repo-name}-auditracker.json`
 
@@ -116,7 +116,7 @@ Each function shows:
 
 Each file shows:
 - Relative path
-- Review progress (e.g., "3/10 reviewed")
+- Read and review progress (e.g., "12/23 read · 3/23 reviewed")
 
 ## Commands
 
