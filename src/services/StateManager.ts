@@ -3,11 +3,7 @@ import * as path from "path";
 import {
   AudiotrackerState,
   DailyProgress,
-  DEFAULT_FUNCTION_FILTERS,
   FunctionState,
-  FunctionFilters,
-  FunctionStatus,
-  FunctionTag,
   ScopedFile,
   STATE_VERSION,
   createDefaultState,
@@ -51,10 +47,6 @@ export class StateManager {
 
   private normalizeState(state: AudiotrackerState): AudiotrackerState {
     const unique = (values: string[]): string[] => [...new Set(values)];
-    const isFunctionStatus = (value: string): value is FunctionStatus =>
-      value === "unread" || value === "read" || value === "reviewed";
-    const isFunctionTag = (value: string): value is FunctionTag =>
-      value === "entrypoint" || value === "admin";
 
     const scopePaths = unique(
       Array.isArray(state.scopePaths)
@@ -67,32 +59,6 @@ export class StateManager {
         ? state.excludedPaths.filter((p): p is string => typeof p === "string" && p.length > 0)
         : []
     );
-
-    const rawFilters = state.functionFilters as unknown as {
-      statuses?: unknown;
-      tags?: unknown;
-    };
-
-    const statuses = unique(
-      rawFilters && Array.isArray(rawFilters.statuses)
-        ? rawFilters.statuses
-            .filter((s): s is string => typeof s === "string")
-            .filter(isFunctionStatus)
-        : []
-    ) as FunctionStatus[];
-
-    const tags = unique(
-      rawFilters && Array.isArray(rawFilters.tags)
-        ? rawFilters.tags
-            .filter((t): t is string => typeof t === "string")
-            .filter(isFunctionTag)
-        : []
-    ) as FunctionTag[];
-
-    const functionFilters: FunctionFilters = {
-      statuses: statuses.length > 0 ? statuses : [...DEFAULT_FUNCTION_FILTERS.statuses],
-      tags,
-    };
 
     const files: Record<string, ScopedFile> = {};
     if (state.files && typeof state.files === "object") {
@@ -125,17 +91,18 @@ export class StateManager {
                     ? fn.id
                     : `${filePath}#${name}#${startLine}`;
 
+                // Migrate from old schema: isReviewed or readCount > 0 both map to isAudited
+                const raw = fn as unknown as Record<string, unknown>;
+                const isAudited = Boolean(fn.isAudited) || Boolean(raw.isReviewed) ||
+                  (typeof raw.readCount === "number" && raw.readCount > 0);
+
                 return {
                   id,
                   name,
                   filePath,
                   startLine,
                   endLine: Math.max(endLine, startLine),
-                  readCount:
-                    typeof fn.readCount === "number" && fn.readCount > 0 ? 1 : 0,
-                  isReviewed: Boolean(fn.isReviewed),
-                  isEntrypoint: Boolean(fn.isEntrypoint),
-                  isAdmin: Boolean(fn.isAdmin),
+                  isAudited,
                   isHidden: Boolean(fn.isHidden),
                 };
               })
@@ -149,23 +116,33 @@ export class StateManager {
       }
     }
 
+    // Migrate old progress history fields
+    const migrateActionType = (type: string): string => {
+      if (type === "functionRead" || type === "functionReviewed") return "functionAudited";
+      if (type === "fileRead" || type === "fileReviewed") return "fileAudited";
+      return type;
+    };
+
     const progressHistory: DailyProgress[] = Array.isArray(state.progressHistory)
       ? state.progressHistory
           .filter((entry) => Boolean(entry) && typeof entry === "object")
           .map((entry) => {
+            const raw = entry as unknown as Record<string, unknown>;
             const date = typeof entry.date === "string" ? entry.date : "unknown";
 
             const actions = Array.isArray(entry.actions)
               ? entry.actions
                   .filter((a) => Boolean(a) && typeof a === "object")
                   .filter((a) =>
+                    a.type === "functionAudited" ||
+                    a.type === "fileAudited" ||
                     a.type === "functionRead" ||
                     a.type === "functionReviewed" ||
                     a.type === "fileRead" ||
                     a.type === "fileReviewed"
                   )
                   .map((a) => ({
-                    type: a.type,
+                    type: migrateActionType(a.type) as "functionAudited" | "fileAudited",
                     filePath: typeof a.filePath === "string" ? a.filePath : "unknown",
                     functionName:
                       typeof a.functionName === "string" ? a.functionName : undefined,
@@ -176,45 +153,35 @@ export class StateManager {
                   }))
               : [];
 
+            const toNum = (key: string): number =>
+              typeof raw[key] === "number" && Number.isFinite(raw[key] as number)
+                ? raw[key] as number
+                : 0;
+
+            const functionsAudited = toNum("functionsAudited") + toNum("functionsRead") + toNum("functionsReviewed");
+            const linesAudited = toNum("linesAudited") + toNum("linesRead") + toNum("linesReviewed");
+            const filesAudited = toNum("filesAudited") + toNum("filesRead") + toNum("filesReviewed");
+
             return {
               date,
-              functionsRead:
-                typeof entry.functionsRead === "number" && Number.isFinite(entry.functionsRead)
-                  ? entry.functionsRead
-                  : 0,
-              functionsReviewed:
-                typeof entry.functionsReviewed === "number" &&
-                Number.isFinite(entry.functionsReviewed)
-                  ? entry.functionsReviewed
-                  : 0,
-              linesRead:
-                typeof entry.linesRead === "number" && Number.isFinite(entry.linesRead)
-                  ? entry.linesRead
-                  : 0,
-              linesReviewed:
-                typeof entry.linesReviewed === "number" &&
-                Number.isFinite(entry.linesReviewed)
-                  ? entry.linesReviewed
-                  : 0,
-              filesRead:
-                typeof entry.filesRead === "number" && Number.isFinite(entry.filesRead)
-                  ? entry.filesRead
-                  : 0,
-              filesReviewed:
-                typeof entry.filesReviewed === "number" &&
-                Number.isFinite(entry.filesReviewed)
-                  ? entry.filesReviewed
-                  : 0,
+              functionsAudited,
+              linesAudited,
+              filesAudited,
               actions,
             };
           })
       : [];
 
+    const activeFilePath =
+      typeof state.activeFilePath === "string" && state.activeFilePath.length > 0
+        ? state.activeFilePath
+        : null;
+
     return {
       version: typeof state.version === "number" ? state.version : STATE_VERSION,
       scopePaths,
       excludedPaths,
-      functionFilters,
+      activeFilePath,
       files,
       progressHistory,
       lastModified:
@@ -252,30 +219,12 @@ export class StateManager {
     return this.state.scopePaths;
   }
 
-  getFunctionFilters(): FunctionFilters {
-    return this.state.functionFilters;
+  getActiveFilePath(): string | null {
+    return this.state.activeFilePath;
   }
 
-  setFunctionFilters(filters: FunctionFilters): void {
-    const unique = <T extends string>(values: T[]): T[] => [...new Set(values)];
-    const statuses = unique(filters.statuses).filter(
-      (s) => s === "unread" || s === "read" || s === "reviewed"
-    );
-    const tags = unique(filters.tags).filter(
-      (t) => t === "entrypoint" || t === "admin"
-    );
-
-    this.state.functionFilters = {
-      statuses: statuses.length > 0 ? statuses : [...DEFAULT_FUNCTION_FILTERS.statuses],
-      tags,
-    };
-  }
-
-  clearFunctionFilters(): void {
-    this.state.functionFilters = {
-      statuses: [...DEFAULT_FUNCTION_FILTERS.statuses],
-      tags: [],
-    };
+  setActiveFilePath(filePath: string | null): void {
+    this.state.activeFilePath = filePath;
   }
 
   addScopePath(filePath: string): void {
@@ -349,10 +298,7 @@ export class StateManager {
         if (existing) {
           return {
             ...fn,
-            readCount: existing.readCount,
-            isReviewed: existing.isReviewed,
-            isEntrypoint: existing.isEntrypoint,
-            isAdmin: existing.isAdmin,
+            isAudited: existing.isAudited,
             isHidden: existing.isHidden,
           };
         }
@@ -385,44 +331,11 @@ export class StateManager {
     return Object.values(this.state.files);
   }
 
-  setRead(functionId: string, read: boolean): void {
+  setAudited(functionId: string, audited: boolean): void {
     for (const file of Object.values(this.state.files)) {
       for (const fn of file.functions) {
         if (fn.id === functionId) {
-          fn.readCount = read ? 1 : 0;
-          return;
-        }
-      }
-    }
-  }
-
-  setReviewed(functionId: string, reviewed: boolean): void {
-    for (const file of Object.values(this.state.files)) {
-      for (const fn of file.functions) {
-        if (fn.id === functionId) {
-          fn.isReviewed = reviewed;
-          return;
-        }
-      }
-    }
-  }
-
-  setEntrypoint(functionId: string, isEntrypoint: boolean): void {
-    for (const file of Object.values(this.state.files)) {
-      for (const fn of file.functions) {
-        if (fn.id === functionId) {
-          fn.isEntrypoint = isEntrypoint;
-          return;
-        }
-      }
-    }
-  }
-
-  setAdmin(functionId: string, isAdmin: boolean): void {
-    for (const file of Object.values(this.state.files)) {
-      for (const fn of file.functions) {
-        if (fn.id === functionId) {
-          fn.isAdmin = isAdmin;
+          fn.isAudited = audited;
           return;
         }
       }
@@ -452,12 +365,9 @@ export class StateManager {
     if (!entry) {
       entry = {
         date: today,
-        functionsRead: 0,
-        functionsReviewed: 0,
-        linesRead: 0,
-        linesReviewed: 0,
-        filesRead: 0,
-        filesReviewed: 0,
+        functionsAudited: 0,
+        linesAudited: 0,
+        filesAudited: 0,
         actions: [],
       };
       this.state.progressHistory.push(entry);
@@ -465,44 +375,23 @@ export class StateManager {
     return entry;
   }
 
-  recordFunctionRead(filePath: string, functionName: string, lineCount: number): void {
+  recordFunctionAudited(filePath: string, functionName: string, lineCount: number): void {
     const progress = this.getOrCreateTodayProgress();
-    progress.functionsRead++;
-    progress.linesRead += lineCount;
+    progress.functionsAudited++;
+    progress.linesAudited += lineCount;
     progress.actions.push({
-      type: "functionRead",
+      type: "functionAudited",
       filePath,
       functionName,
       lineCount,
     });
   }
 
-  recordFunctionReviewed(filePath: string, functionName: string, lineCount: number): void {
+  recordFileAudited(filePath: string): void {
     const progress = this.getOrCreateTodayProgress();
-    progress.functionsReviewed++;
-    progress.linesReviewed += lineCount;
+    progress.filesAudited++;
     progress.actions.push({
-      type: "functionReviewed",
-      filePath,
-      functionName,
-      lineCount,
-    });
-  }
-
-  recordFileRead(filePath: string): void {
-    const progress = this.getOrCreateTodayProgress();
-    progress.filesRead++;
-    progress.actions.push({
-      type: "fileRead",
-      filePath,
-    });
-  }
-
-  recordFileReviewed(filePath: string): void {
-    const progress = this.getOrCreateTodayProgress();
-    progress.filesReviewed++;
-    progress.actions.push({
-      type: "fileReviewed",
+      type: "fileAudited",
       filePath,
     });
   }

@@ -4,7 +4,7 @@
 
 # Auditracker
 
-A VSCode extension for tracking code audit progress. Mark files as in-scope, track function review status, and identify entrypoints.
+A VSCode extension for tracking code audit progress. Mark files as in-scope and track function audit status.
 
 ## Installation
 
@@ -14,13 +14,10 @@ git clone https://github.com/nisedo/auditracker.git && cd auditracker && npm ins
 
 ## Features
 
+- **Two-Panel Layout**: Top panel focuses on one file at a time; bottom panel lists all in-scope files
 - **Scope Management**: Right-click files or folders in the Explorer to add/remove from audit scope
-- **File Decorations**: In-scope files display a 📌 badge in the Explorer
 - **Function Tracking**: Automatically extracts all functions from in-scope files
-- **Review Status**: Track functions as unread, read, or reviewed
-- **Filtering**: Filter the panel by status and tags (unread/read/reviewed/entrypoint/admin)
-- **Entrypoints**: Mark critical functions as entrypoints for special visibility (❗️)
-- **Admin Functions**: Mark admin/privileged functions for security-focused review (🔐)
+- **Audit Status**: Track functions as unaudited or audited
 - **Auto-Discovery**: Automatically loads `contracts/`, `src/`, `lib/`, or `sources/` folder when no scope is defined
 - **SCOPE File Support**: Auto-load scope from `SCOPE.txt` or `SCOPE.md` at workspace root
 - **Navigation**: Click any function to jump to it with temporary highlighting
@@ -28,6 +25,13 @@ git clone https://github.com/nisedo/auditracker.git && cd auditracker && npm ins
 - **Persistence**: State is saved per-workspace in `.vscode/{repo-name}-auditracker.json`
 
 ## Usage
+
+### Panel Layout
+
+Auditracker uses a two-panel layout in the sidebar:
+
+- **Active File** (top): Shows all functions of the currently selected file. Click functions to navigate to them, mark them as audited, or hide them.
+- **Files** (bottom): Lists all in-scope files with their audit progress (e.g., "3/23 audited"). Click a file to load it into the Active File panel and open it in the editor.
 
 ### Adding Files to Scope
 
@@ -53,70 +57,44 @@ If a folder is in scope and you remove a single file, Auditracker remembers that
 
 ### Tracking Progress
 
-Functions display with three states:
+Functions display with two states:
 
 | Icon | Status | Description |
 |:----:|--------|-------------|
-| ○ | **Unread** | Not yet reviewed |
-| 👁 | **Read** | Read but not fully reviewed (yellow) |
-| ✓ | **Reviewed** | Fully reviewed (green) |
+| ○ | **Unaudited** | Not yet audited |
+| ✓ | **Audited** | Audited (green) |
 
-**Workflow**: Functions must be marked as "read" before they can be marked as "reviewed". Click the inline button or right-click to change status.
-
-### Filtering Functions
-
-Use **Auditracker: Filter Functions** (or the filter icon in the panel title) to control which functions are shown.
-
-- Status filters: unread/read/reviewed (you can select any combination)
-- Tag filters: entrypoint/admin
-
-Filters are combined as: **(status matches) AND (tag matches)**. If you select multiple tags, a function matches if it has **any** selected tag.
-
-Use **Auditracker: Clear Function Filter** to reset back to showing everything.
+Click the inline button or right-click to change status.
 
 ### Hiding Functions
 
-Some functions (like abstract declarations or trivial getters) may not need review. Right-click a function and select **Hide Function** to remove it from the panel. Hidden functions:
+Some functions (like abstract declarations or trivial getters) may not need review. Right-click a function in the Active File panel and select **Hide Function** to remove it from the panel. Hidden functions:
 - Don't appear in the function list
-- Don't count toward review progress
-- File description shows hidden count (e.g., "3/10 reviewed (2 hidden)")
+- Don't count toward audit progress
+- File description shows hidden count (e.g., "3/10 audited (2 hidden)")
 
-To restore hidden functions, right-click the file and select **Show Hidden Functions**.
-
-### Marking Entrypoints
-
-Right-click any function and select **Mark as Entrypoint** to highlight critical entry points. Entrypoints display with:
-- Exclamation prefix (`❗️`)
-- "entrypoint" label in the description
-
-### Marking Admin Functions
-
-Right-click any function and select **Mark as Admin** to highlight admin/privileged functions that need security-focused review. Admin functions display with:
-- Lock prefix (`🔐`)
-- "admin" label in the description
-
-Functions can be both entrypoints and admin: `❗️ 🔐 onlyOwner()`
+To restore hidden functions, right-click the file in the Files panel and select **Show Hidden Functions**.
 
 ### Progress Tracking
 
 Auditracker automatically tracks your daily audit activity. Use **Auditracker: Show Progress Report** to generate a markdown report showing:
 
-- **Overall Progress**: Current status of functions and files (read/reviewed counts and percentages)
-- **Daily Activity Summary**: Table of daily counts for functions read/reviewed, lines of code read/reviewed, and files completed
-- **Detailed Activity Log**: For each day, lists exactly which functions were read/reviewed and which files were completed
+- **Overall Progress**: Current status of functions and files (audited counts and percentages)
+- **Daily Activity Summary**: Table of daily counts for functions audited, lines of code audited, and files completed
+- **Detailed Activity Log**: For each day, lists exactly which functions were audited and which files were completed
 
 The report is saved to `.vscode/{repo-name}-audit-progress.md` and opens automatically.
 
 ### Panel Information
 
-Each function shows:
-- Status icon (○ unread, 👁 read, ✓ reviewed)
-- Function name (with ❗️ prefix for entrypoints, 🔐 prefix for admin)
+**Active File panel** — each function shows:
+- Status icon (○ unaudited, ✓ audited)
+- Function name
 - Line count
 
-Each file shows:
-- Relative path
-- Read and review progress (e.g., "12/23 read · 3/23 reviewed")
+**Files panel** — each file shows:
+- File name (hover for full path)
+- Audit progress (e.g., "3/23 audited")
 
 ## Commands
 
@@ -124,22 +102,14 @@ Each file shows:
 |---------|-------------|
 | `Auditracker: Add to Scope` | Add file/folder to audit scope |
 | `Auditracker: Remove from Scope` | Remove from scope |
-| `Mark as Read` | Mark function as read (inline/context menu) |
-| `Mark as Unread` | Mark function as unread (context menu) |
-| `Mark as Reviewed` | Mark function as reviewed (inline/context menu) |
-| `Unmark Reviewed` | Unmark reviewed (context menu) |
-| `Auditracker: Filter Functions` | Filter which functions are shown in the panel |
-| `Auditracker: Clear Function Filter` | Clear the function filter |
+| `Mark as Audited` | Mark function as audited (inline/context menu) |
+| `Unmark Audited` | Unmark audited (context menu) |
 | `Auditracker: Load Scope File` | Load/reload scope from SCOPE.txt or SCOPE.md |
 | `Auditracker: Clear All Tracking State` | Reset all tracking data |
 | `Auditracker: Show Progress Report` | Generate and open daily progress report |
-| `Mark as Entrypoint` | Mark function as an entrypoint (context menu) |
-| `Unmark Entrypoint` | Remove entrypoint marking (context menu) |
-| `Mark as Admin` | Mark function as admin/privileged (context menu) |
-| `Unmark Admin` | Remove admin marking (context menu) |
+| `Auditracker: Refresh` | Re-extract symbols from all files |
 | `Hide Function` | Hide a function from the panel (context menu) |
 | `Show Hidden Functions` | Restore all hidden functions in a file (context menu) |
-| `Refresh` | Re-extract symbols from all files |
 
 ## Requirements
 
@@ -155,7 +125,7 @@ This extension stores state in `.vscode/{repo-name}-auditracker.json` within you
 
 Progress reports are generated at `.vscode/{repo-name}-audit-progress.md`.
 
-If you don’t want to commit these files, add them to your repo’s `.gitignore`:
+If you don't want to commit these files, add them to your repo's `.gitignore`:
 
 ```
 .vscode/*-auditracker.json
@@ -174,7 +144,3 @@ Works with any language that provides document symbols via VSCode's Language Ser
 |----------|----------------------|
 | Solidity | [Hardhat Solidity](https://marketplace.visualstudio.com/items?itemName=NomicFoundation.hardhat-solidity) (`NomicFoundation.hardhat-solidity`) |
 | Rust | [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer) (`rust-lang.rust-analyzer`) |
-
-## Release Notes
-
-See `CHANGELOG.md`.

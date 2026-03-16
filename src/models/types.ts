@@ -12,32 +12,11 @@ export interface FunctionState {
   startLine: number;
   /** Line number where function ends (0-indexed) */
   endLine: number;
-  /** Whether the function has been marked as read (0/1) */
-  readCount: number;
-  /** Whether the function has been marked as fully reviewed */
-  isReviewed: boolean;
-  /** Whether this function is marked as an entrypoint */
-  isEntrypoint: boolean;
-  /** Whether this function is marked as an admin function */
-  isAdmin: boolean;
+  /** Whether the function has been marked as audited */
+  isAudited: boolean;
   /** Whether this function is hidden from the panel */
   isHidden: boolean;
 }
-
-export type FunctionStatus = "unread" | "read" | "reviewed";
-export type FunctionTag = "entrypoint" | "admin";
-
-export interface FunctionFilters {
-  /** Function status filters (unread/read/reviewed) */
-  statuses: FunctionStatus[];
-  /** Function tag filters (entrypoint/admin) */
-  tags: FunctionTag[];
-}
-
-export const DEFAULT_FUNCTION_FILTERS: FunctionFilters = {
-  statuses: ["unread", "read", "reviewed"],
-  tags: [],
-};
 
 /**
  * Represents a file in scope with its functions
@@ -56,7 +35,7 @@ export interface ScopedFile {
  */
 export interface DailyProgressAction {
   /** Type of action performed */
-  type: "functionRead" | "functionReviewed" | "fileRead" | "fileReviewed";
+  type: "functionAudited" | "fileAudited";
   /** Relative path to file */
   filePath: string;
   /** Function name (for function actions) */
@@ -71,18 +50,12 @@ export interface DailyProgressAction {
 export interface DailyProgress {
   /** Date in YYYY-MM-DD format */
   date: string;
-  /** Functions marked read this day */
-  functionsRead: number;
-  /** Functions marked reviewed this day */
-  functionsReviewed: number;
-  /** Total lines of code read this day */
-  linesRead: number;
-  /** Total lines of code reviewed this day */
-  linesReviewed: number;
-  /** Files fully read this day */
-  filesRead: number;
-  /** Files fully reviewed this day */
-  filesReviewed: number;
+  /** Functions marked audited this day */
+  functionsAudited: number;
+  /** Total lines of code audited this day */
+  linesAudited: number;
+  /** Files fully audited this day */
+  filesAudited: number;
   /** Detailed log of actions */
   actions: DailyProgressAction[];
 }
@@ -97,8 +70,8 @@ export interface AudiotrackerState {
   scopePaths: string[];
   /** List of explicit file paths excluded from scope */
   excludedPaths: string[];
-  /** Tree view function filters */
-  functionFilters: FunctionFilters;
+  /** Currently selected file in the Active File panel */
+  activeFilePath: string | null;
   /** Map of file path to its scoped data */
   files: Record<string, ScopedFile>;
   /** Daily progress history */
@@ -114,10 +87,7 @@ export function createDefaultState(): AudiotrackerState {
     version: STATE_VERSION,
     scopePaths: [],
     excludedPaths: [],
-    functionFilters: {
-      statuses: [...DEFAULT_FUNCTION_FILTERS.statuses],
-      tags: [],
-    },
+    activeFilePath: null,
     files: {},
     progressHistory: [],
     lastModified: Date.now(),

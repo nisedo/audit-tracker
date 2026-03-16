@@ -7,10 +7,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **IMPORTANT**: After making ANY code changes, you MUST update all relevant documentation:
 
 1. **readme.md** - Update feature descriptions, usage instructions, and commands table
-2. **changelog.md** - Add changes to the `[Unreleased]` section
-3. **CLAUDE.md** - Update if architecture or data flow changes (this file)
+2. **CLAUDE.md** - Update if architecture or data flow changes (this file)
 
-Never skip documentation updates. Always check all three files after implementing features or making changes.
+Never skip documentation updates. Always check both files after implementing features or making changes.
 
 ## Build Commands
 
@@ -41,27 +40,27 @@ Auditracker intentionally supports **single-folder, local file system workspaces
 - `src/extension.ts` - Activates extension, registers all commands, tree views, and providers. Contains command implementations inline.
 
 ### Services Layer (`src/services/`)
-- **StateManager** - Persists state to `.vscode/{repo-name}-auditracker.json`. Manages scope paths, `excludedPaths`, `functionFilters`, scoped files with functions, and progress history. All state mutations go through this class.
+- **StateManager** - Persists state to `.vscode/{repo-name}-auditracker.json`. Manages scope paths, `excludedPaths`, scoped files with functions, and progress history. All state mutations go through this class.
 - **StateManager** also tracks `excludedPaths` for files explicitly removed from scope (useful when a folder is in scope but a specific file should be skipped).
 - **ScopeManager** - Orchestrates adding/removing files from scope. Expands folders to files, delegates to SymbolExtractor, updates StateManager.
 - **SymbolExtractor** - Uses VSCode's `DocumentSymbolProvider` API to extract functions/methods from files.
 
 ### Providers Layer (`src/providers/`)
-- **AuditTreeProvider** - `TreeDataProvider` for the Functions panel. Shows files with their functions, sorted by review status (unread → read → reviewed).
-- **ScopeDecorationProvider** - `FileDecorationProvider` that adds 📌 badge to in-scope files in the Explorer.
+- **ActiveFileTreeProvider** - `TreeDataProvider` for the Active File panel (top). Shows functions of a single selected file, sorted by audit status (unaudited → audited). Shows a placeholder when no file is selected.
+- **FilesTreeProvider** - `TreeDataProvider` for the Files panel (bottom). Flat list of all in-scope files with audit progress counts. Clicking a file selects it into the Active File panel and opens it in the editor.
 
 ### Models (`src/models/types.ts`)
-TypeScript interfaces for all data structures: `FunctionState`, `ScopedFile`, `DailyProgress`, `AuditrackerState`.
+TypeScript interfaces for all data structures: `FunctionState`, `ScopedFile`, `DailyProgress`, `AudiotrackerState`.
 
-Key `FunctionState` fields: `id`, `name`, `filePath`, `startLine`, `endLine`, `readCount`, `isReviewed`, `isEntrypoint`, `isAdmin`, `isHidden`.
+Key `FunctionState` fields: `id`, `name`, `filePath`, `startLine`, `endLine`, `isAudited`, `isHidden`.
 
 ### Data Flow
 1. On activation, if no scope exists: try SCOPE file → auto-discover source folder (`contracts/`, `src/`, `lib/`, `sources/`)
 2. User can also add file/folder to scope via context menu
 3. `ScopeManager.addToScope()` expands path, extracts symbols via `SymbolExtractor`
 4. `StateManager` stores file data and persists to JSON
-5. Tree providers read from `StateManager` and render UI
-6. Decoration providers query `StateManager` to determine badges
+5. User clicks a file in the Files panel → `ActiveFileTreeProvider.setActiveFile()` loads it into the top panel
+6. Both tree providers read from `StateManager` and render UI
 
 ### Key Files
 - State: `.vscode/{repo-name}-auditracker.json`

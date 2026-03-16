@@ -53,10 +53,7 @@ export class SymbolExtractor {
           filePath,
           startLine: symbol.range.start.line,
           endLine: symbol.range.end.line,
-          readCount: 0,
-          isReviewed: false,
-          isEntrypoint: false,
-          isAdmin: false,
+          isAudited: false,
           isHidden: false,
         });
       }
@@ -75,29 +72,27 @@ export class SymbolExtractor {
     return results;
   }
 
-  /**
-   * Check if symbol kind represents a function-like construct
-   */
+  private static readonly FUNCTION_KINDS = new Set([
+    vscode.SymbolKind.Function,
+    vscode.SymbolKind.Method,
+    vscode.SymbolKind.Constructor,
+  ]);
+
+  private static readonly CONTAINER_KINDS = new Set([
+    vscode.SymbolKind.Class,
+    vscode.SymbolKind.Interface,
+    vscode.SymbolKind.Module,
+    vscode.SymbolKind.Namespace,
+    vscode.SymbolKind.Struct,
+    vscode.SymbolKind.Enum,
+    vscode.SymbolKind.Object,
+  ]);
+
   private isFunctionLike(kind: vscode.SymbolKind): boolean {
-    return [
-      vscode.SymbolKind.Function,
-      vscode.SymbolKind.Method,
-      vscode.SymbolKind.Constructor,
-    ].includes(kind);
+    return SymbolExtractor.FUNCTION_KINDS.has(kind);
   }
 
-  /**
-   * Check if symbol kind represents a container (class, interface, etc.)
-   */
   private isContainerLike(kind: vscode.SymbolKind): boolean {
-    return [
-      vscode.SymbolKind.Class,
-      vscode.SymbolKind.Interface,
-      vscode.SymbolKind.Module,
-      vscode.SymbolKind.Namespace,
-      vscode.SymbolKind.Struct,
-      vscode.SymbolKind.Enum,
-      vscode.SymbolKind.Object,
-    ].includes(kind);
+    return SymbolExtractor.CONTAINER_KINDS.has(kind);
   }
 }
