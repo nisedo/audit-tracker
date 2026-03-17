@@ -66,8 +66,13 @@ export class FilesTreeProvider
       }
     }
 
-    return items.sort((a, b) =>
-      a.scopedFile.relativePath.localeCompare(b.scopedFile.relativePath)
-    );
+    return items.sort((a, b) => {
+      const aVisible = a.scopedFile.functions.filter((f) => !f.isHidden);
+      const bVisible = b.scopedFile.functions.filter((f) => !f.isHidden);
+      const aFullyAudited = aVisible.length > 0 && aVisible.every((f) => f.isAudited);
+      const bFullyAudited = bVisible.length > 0 && bVisible.every((f) => f.isAudited);
+      if (aFullyAudited !== bFullyAudited) return aFullyAudited ? 1 : -1;
+      return a.scopedFile.relativePath.localeCompare(b.scopedFile.relativePath);
+    });
   }
 }

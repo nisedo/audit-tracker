@@ -345,9 +345,10 @@ export async function activate(
     showCollapseAll: false,
   });
 
-  function selectActiveFile(filePath: string | null): void {
+  async function selectActiveFile(filePath: string | null): Promise<void> {
     activeFileProvider.setActiveFile(filePath);
     stateManager.setActiveFilePath(filePath);
+    await stateManager.save();
     if (filePath) {
       const fileName = filePath.split("/").pop() || filePath;
       activeFileView.description = fileName;
