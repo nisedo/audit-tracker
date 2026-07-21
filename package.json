@@ -176,7 +176,8 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "lint": "eslint src --ext ts"
+    "lint": "eslint src --ext ts",
+    "test": "npm run compile && node --test \"out/test/**/*.test.js\""
   },
   "devDependencies": {
     "@types/vscode": "^1.85.0",
