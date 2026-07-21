@@ -1,30 +1,35 @@
 import * as vscode from "vscode";
 import { FunctionState } from "../models/types";
+import { makeFunctionId } from "./stateCore";
 
 export class SymbolExtractor {
   /**
-   * Extract all function-like symbols from a file
-   * Uses vscode.executeDocumentSymbolProvider command for language-agnostic extraction
+   * Extract all function-like symbols from a file, using
+   * vscode.executeDocumentSymbolProvider for language-agnostic extraction.
+   *
+   * Returns `null` when the symbol provider is unavailable — the language server
+   * is not ready, crashed, or absent — so callers can keep the file's existing
+   * audit state instead of mistaking a transient failure for "no functions".
+   * Returns `[]` only when the provider genuinely reports no symbols.
    */
-  async extractSymbols(filePath: string): Promise<FunctionState[]> {
+  async extractSymbols(filePath: string): Promise<FunctionState[] | null> {
     const uri = vscode.Uri.file(filePath);
 
     try {
-      // Open the document first to ensure language server is active
+      // Open the document first to ensure the language server is active.
       await vscode.workspace.openTextDocument(uri);
 
-      // Execute the built-in document symbol provider
       const symbols = await vscode.commands.executeCommand<
-        vscode.DocumentSymbol[]
+        vscode.DocumentSymbol[] | undefined
       >("vscode.executeDocumentSymbolProvider", uri);
 
-      if (!symbols || symbols.length === 0) {
-        return [];
+      if (!Array.isArray(symbols)) {
+        return null;
       }
 
       return this.flattenSymbols(symbols, filePath);
     } catch {
-      return [];
+      return null;
     }
   }
 
@@ -48,7 +53,7 @@ export class SymbolExtractor {
       // Include Functions, Methods, Constructors only
       if (this.isFunctionLike(symbol.kind)) {
         results.push({
-          id: `${filePath}#${displayName}#${symbol.range.start.line}`,
+          id: makeFunctionId(filePath, displayName, symbol.range.start.line),
           name: displayName,
           filePath,
           startLine: symbol.range.start.line,

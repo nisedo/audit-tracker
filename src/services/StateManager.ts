@@ -1,16 +1,21 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import {
-  AudiotrackerState,
+  AuditrackerState,
   DailyProgress,
   FunctionState,
   ScopedFile,
-  STATE_VERSION,
   createDefaultState,
 } from "../models/types";
+import {
+  fromStoredState,
+  mergeFunctions,
+  remapRenamedPath,
+  toStoredState,
+} from "./stateCore";
 
 export class StateManager {
-  private state: AudiotrackerState;
+  private state: AuditrackerState;
   private stateFilePath: vscode.Uri | undefined;
   private saveChain: Promise<void> = Promise.resolve();
 
@@ -30,163 +35,47 @@ export class StateManager {
       return;
     }
 
+    let content: Uint8Array;
     try {
-      const content = await vscode.workspace.fs.readFile(this.stateFilePath);
-      const parsed = JSON.parse(content.toString()) as AudiotrackerState;
-
-      // Merge with defaults + normalize to handle schema evolution.
-      this.state = this.normalizeState({
-        ...createDefaultState(),
-        ...parsed,
-      });
+      content = await vscode.workspace.fs.readFile(this.stateFilePath);
     } catch {
-      // File doesn't exist or is invalid, use defaults
+      // No state file yet — the expected case on first run.
+      this.state = createDefaultState();
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(Buffer.from(content).toString("utf-8"));
+      this.state = fromStoredState(parsed, this.workspaceRoot);
+    } catch {
+      // The file exists but cannot be parsed (e.g. a git merge conflict left
+      // markers in it). Preserve it as a backup rather than overwriting real
+      // audit history with an empty default state.
+      await this.backupCorruptState(content);
       this.state = createDefaultState();
     }
   }
 
-  private normalizeState(state: AudiotrackerState): AudiotrackerState {
-    const unique = (values: string[]): string[] => [...new Set(values)];
-
-    const scopePaths = unique(
-      Array.isArray(state.scopePaths)
-        ? state.scopePaths.filter((p): p is string => typeof p === "string" && p.length > 0)
-        : []
-    );
-
-    const excludedPaths = unique(
-      Array.isArray(state.excludedPaths)
-        ? state.excludedPaths.filter((p): p is string => typeof p === "string" && p.length > 0)
-        : []
-    );
-
-    const files: Record<string, ScopedFile> = {};
-    if (state.files && typeof state.files === "object") {
-      for (const [filePath, file] of Object.entries(state.files)) {
-        if (!file || typeof file !== "object") {
-          continue;
-        }
-
-        const relativePath =
-          typeof file.relativePath === "string" && file.relativePath.length > 0
-            ? file.relativePath
-            : path.basename(filePath);
-
-        const functions: FunctionState[] = Array.isArray(file.functions)
-          ? file.functions
-              .filter((fn) => Boolean(fn) && typeof fn === "object")
-              .map((fn) => {
-                const startLine =
-                  typeof fn.startLine === "number" && Number.isFinite(fn.startLine)
-                    ? fn.startLine
-                    : 0;
-                const endLine =
-                  typeof fn.endLine === "number" && Number.isFinite(fn.endLine)
-                    ? fn.endLine
-                    : startLine;
-
-                const name = typeof fn.name === "string" ? fn.name : "unknown";
-                const id =
-                  typeof fn.id === "string" && fn.id.length > 0
-                    ? fn.id
-                    : `${filePath}#${name}#${startLine}`;
-
-                // Migrate from old schema: isReviewed or readCount > 0 both map to isAudited
-                const raw = fn as unknown as Record<string, unknown>;
-                const isAudited = Boolean(fn.isAudited) || Boolean(raw.isReviewed) ||
-                  (typeof raw.readCount === "number" && raw.readCount > 0);
-
-                return {
-                  id,
-                  name,
-                  filePath,
-                  startLine,
-                  endLine: Math.max(endLine, startLine),
-                  isAudited,
-                  isHidden: Boolean(fn.isHidden),
-                };
-              })
-          : [];
-
-        files[filePath] = {
-          filePath,
-          relativePath,
-          functions,
-        };
-      }
+  private async backupCorruptState(content: Uint8Array): Promise<void> {
+    if (!this.stateFilePath) {
+      return;
     }
-
-    // Migrate old progress history fields
-    const migrateActionType = (type: string): string => {
-      if (type === "functionRead" || type === "functionReviewed") return "functionAudited";
-      if (type === "fileRead" || type === "fileReviewed") return "fileAudited";
-      return type;
-    };
-
-    const progressHistory: DailyProgress[] = Array.isArray(state.progressHistory)
-      ? state.progressHistory
-          .filter((entry) => Boolean(entry) && typeof entry === "object")
-          .map((entry) => {
-            const raw = entry as unknown as Record<string, unknown>;
-            const date = typeof entry.date === "string" ? entry.date : "unknown";
-
-            const actions = Array.isArray(entry.actions)
-              ? entry.actions
-                  .filter((a) => Boolean(a) && typeof a === "object")
-                  .filter((a) =>
-                    a.type === "functionAudited" ||
-                    a.type === "fileAudited" ||
-                    a.type === "functionRead" ||
-                    a.type === "functionReviewed" ||
-                    a.type === "fileRead" ||
-                    a.type === "fileReviewed"
-                  )
-                  .map((a) => ({
-                    type: migrateActionType(a.type) as "functionAudited" | "fileAudited",
-                    filePath: typeof a.filePath === "string" ? a.filePath : "unknown",
-                    functionName:
-                      typeof a.functionName === "string" ? a.functionName : undefined,
-                    lineCount:
-                      typeof a.lineCount === "number" && Number.isFinite(a.lineCount)
-                        ? a.lineCount
-                        : undefined,
-                  }))
-              : [];
-
-            const toNum = (key: string): number =>
-              typeof raw[key] === "number" && Number.isFinite(raw[key] as number)
-                ? raw[key] as number
-                : 0;
-
-            const functionsAudited = toNum("functionsAudited") + toNum("functionsRead") + toNum("functionsReviewed");
-            const linesAudited = toNum("linesAudited") + toNum("linesRead") + toNum("linesReviewed");
-            const filesAudited = toNum("filesAudited") + toNum("filesRead") + toNum("filesReviewed");
-
-            return {
-              date,
-              functionsAudited,
-              linesAudited,
-              filesAudited,
-              actions,
-            };
-          })
-      : [];
-
-    const activeFilePath =
-      typeof state.activeFilePath === "string" && state.activeFilePath.length > 0
-        ? state.activeFilePath
-        : null;
-
-    return {
-      version: typeof state.version === "number" ? state.version : STATE_VERSION,
-      scopePaths,
-      excludedPaths,
-      activeFilePath,
-      files,
-      progressHistory,
-      lastModified:
-        typeof state.lastModified === "number" ? state.lastModified : Date.now(),
-    };
+    const backupPath = this.stateFilePath.with({
+      path: `${this.stateFilePath.path}.corrupt-${Date.now()}.json`,
+    });
+    try {
+      await vscode.workspace.fs.writeFile(backupPath, content);
+      vscode.window.showErrorMessage(
+        "Auditracker: the tracking file could not be parsed and was reset. " +
+          `Your previous data was preserved at ${path.basename(
+            backupPath.fsPath
+          )}.`
+      );
+    } catch {
+      vscode.window.showErrorMessage(
+        "Auditracker: the tracking file could not be parsed and was reset."
+      );
+    }
   }
 
   async save(): Promise<void> {
@@ -206,8 +95,14 @@ export class StateManager {
       }
 
       this.state.lastModified = Date.now();
-      const content = Buffer.from(JSON.stringify(this.state, null, 2), "utf-8");
-      await vscode.workspace.fs.writeFile(this.stateFilePath as vscode.Uri, content);
+      // Persist paths relative to the workspace so the file is portable across
+      // machines/clones and never leaks absolute paths of the auditor's disk.
+      const stored = toStoredState(this.state, this.workspaceRoot);
+      const content = Buffer.from(JSON.stringify(stored, null, 2), "utf-8");
+      await vscode.workspace.fs.writeFile(
+        this.stateFilePath as vscode.Uri,
+        content
+      );
     };
 
     // Serialize writes to avoid out-of-order state file corruption.
@@ -240,7 +135,9 @@ export class StateManager {
   }
 
   removeExcludedPath(filePath: string): void {
-    this.state.excludedPaths = this.state.excludedPaths.filter((p) => p !== filePath);
+    this.state.excludedPaths = this.state.excludedPaths.filter(
+      (p) => p !== filePath
+    );
   }
 
   isPathExcluded(filePath: string): boolean {
@@ -275,48 +172,23 @@ export class StateManager {
     functions: FunctionState[]
   ): void {
     const existingFile = this.state.files[filePath];
+    const merged = existingFile
+      ? mergeFunctions(existingFile.functions, functions)
+      : functions;
 
-    if (existingFile) {
-      // Preserve existing state when line numbers change by matching on name.
-      const existingByName = new Map<string, FunctionState>();
-      const existingById = new Map<string, FunctionState>();
-      for (const fn of existingFile.functions) {
-        existingByName.set(fn.name, fn);
-        existingById.set(fn.id, fn);
-      }
+    this.state.files[filePath] = {
+      filePath,
+      relativePath,
+      functions: merged,
+    };
+  }
 
-      // Merge new functions with existing state
-      const mergedFunctions = functions.map((fn) => {
-        // First try exact ID match (fastest, handles unchanged functions)
-        let existing = existingById.get(fn.id);
-
-        // If no ID match, try matching by name (handles line number changes)
-        if (!existing) {
-          existing = existingByName.get(fn.name);
-        }
-
-        if (existing) {
-          return {
-            ...fn,
-            isAudited: existing.isAudited,
-            isHidden: existing.isHidden,
-          };
-        }
-        return fn;
-      });
-
-      this.state.files[filePath] = {
-        filePath,
-        relativePath,
-        functions: mergedFunctions,
-      };
-    } else {
-      this.state.files[filePath] = {
-        filePath,
-        relativePath,
-        functions,
-      };
-    }
+  /**
+   * Move audit state to a new path after a rename (file or folder). Returns true
+   * when something moved, so the caller can skip an unnecessary save.
+   */
+  renamePath(oldPath: string, newPath: string): boolean {
+    return remapRenamedPath(this.state, oldPath, newPath, this.workspaceRoot);
   }
 
   removeFile(filePath: string): void {
@@ -375,7 +247,11 @@ export class StateManager {
     return entry;
   }
 
-  recordFunctionAudited(filePath: string, functionName: string, lineCount: number): void {
+  recordFunctionAudited(
+    filePath: string,
+    functionName: string,
+    lineCount: number
+  ): void {
     const progress = this.getOrCreateTodayProgress();
     progress.functionsAudited++;
     progress.linesAudited += lineCount;

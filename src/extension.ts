@@ -731,7 +731,30 @@ export async function activate(
     }
   });
 
-  context.subscriptions.push(fileWatcher);
+  // Move audit state when files or folders are renamed/moved in the workspace,
+  // so a rename is not mistaken for a delete plus a brand-new untracked file.
+  const renameListener = vscode.workspace.onDidRenameFiles(async (event) => {
+    let changed = false;
+    for (const { oldUri, newUri } of event.files) {
+      if (stateManager.renamePath(oldUri.fsPath, newUri.fsPath)) {
+        changed = true;
+      }
+    }
+    if (!changed) {
+      return;
+    }
+    // Keep the Active File panel pointed at the file if it (or its folder) moved.
+    if (
+      activeFileProvider.getActiveFilePath() !==
+      stateManager.getActiveFilePath()
+    ) {
+      selectActiveFile(stateManager.getActiveFilePath());
+    }
+    await stateManager.save();
+    refreshAll();
+  });
+
+  context.subscriptions.push(fileWatcher, renameListener);
 }
 
 export function deactivate(): void {

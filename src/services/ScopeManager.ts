@@ -136,6 +136,12 @@ export class ScopeManager {
   private async extractSymbolsForFiles(files: string[]): Promise<void> {
     for (const filePath of files) {
       const symbols = await this.symbolExtractor.extractSymbols(filePath);
+      // A null result means the symbol provider was unavailable; keep the
+      // file's existing audit state rather than overwriting it with an empty
+      // list and losing every mark.
+      if (symbols === null) {
+        continue;
+      }
       const relativePath = this.getRelativePath(filePath);
       this.stateManager.setFileFunctions(filePath, relativePath, symbols);
     }
@@ -145,8 +151,9 @@ export class ScopeManager {
    * Get path relative to workspace root
    */
   private getRelativePath(filePath: string): string {
-    if (this.workspaceRoot && filePath.startsWith(this.workspaceRoot)) {
-      return path.relative(this.workspaceRoot, filePath);
+    const root = this.workspaceRoot;
+    if (root && (filePath === root || filePath.startsWith(root + path.sep))) {
+      return path.relative(root, filePath);
     }
     return path.basename(filePath);
   }
