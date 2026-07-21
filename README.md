@@ -9,7 +9,16 @@ A VSCode extension for tracking code audit progress. Mark files as in-scope and 
 ## Installation
 
 ```bash
-git clone https://github.com/nisedo/auditracker.git && cd auditracker && npm install && npm run compile && npx vsce package && code --install-extension auditracker-*.vsix --force
+git clone https://github.com/nisedo/auditracker.git && cd auditracker && npm install && npm run compile && npx @vscode/vsce package && code --install-extension auditracker-*.vsix --force
+```
+
+## Development
+
+```bash
+npm install
+npm run compile   # type-check and build to out/
+npm run lint      # ESLint
+npm test          # unit tests (node --test) for the state/merge/persistence logic
 ```
 
 ## Features

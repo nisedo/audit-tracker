@@ -17,12 +17,13 @@ Never skip documentation updates. Always check both files after implementing fea
 npm run compile      # Compile TypeScript
 npm run watch        # Watch mode compilation
 npm run lint         # Run ESLint
+npm test             # Run unit tests (node --test)
 ```
 
 ## Package and Install
 
 ```bash
-npm run compile && npx vsce package && code --install-extension auditracker-*.vsix --force
+npm run compile && npx @vscode/vsce package && code --install-extension auditracker-*.vsix --force
 ```
 
 ## Architecture
@@ -50,7 +51,7 @@ Auditracker intentionally supports **single-folder, local file system workspaces
 - **FilesTreeProvider** - `TreeDataProvider` for the Files panel (bottom). Flat list of all in-scope files with audit progress counts. Clicking a file selects it into the Active File panel and opens it in the editor.
 
 ### Models (`src/models/types.ts`)
-TypeScript interfaces for all data structures: `FunctionState`, `ScopedFile`, `DailyProgress`, `AudiotrackerState`.
+TypeScript interfaces for all data structures: `FunctionState`, `ScopedFile`, `DailyProgress`, `AuditrackerState`.
 
 Key `FunctionState` fields: `id`, `name`, `filePath`, `startLine`, `endLine`, `isAudited`, `isHidden`.
 
