@@ -4,6 +4,8 @@
 
 # Auditracker
 
+[![CI](https://github.com/nisedo/auditracker/actions/workflows/ci.yml/badge.svg)](https://github.com/nisedo/auditracker/actions/workflows/ci.yml)
+
 A VSCode extension for tracking code audit progress. Mark files as in-scope and track function audit status.
 
 ## Installation
